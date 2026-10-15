@@ -10,6 +10,7 @@ import com.example.servinow.core.theme.ServiNowTheme
 import com.example.servinow.features.community.CommunityRoute
 import com.example.servinow.features.community.CommunityViewModel
 
+// comprobando si puedo hacer commits
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

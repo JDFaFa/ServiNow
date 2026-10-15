@@ -63,3 +63,7 @@ Leer los repositorios, validaciones y ViewModel, ejecutar el recorrido y explica
 las decisiones. Las pruebas automatizadas no sustituyen la revisión de los tres
 integrantes. No se afirma que una persona haya revisado código si no lo ha hecho.
 Consultar el PDF para el registro del apoyo de IA, dificultades y correcciones.
+
+## Documento de entrega
+
+[Descargar PDF de la segunda fase](entrega/ServiNow-entrega-fase-2.pdf)
