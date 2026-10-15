@@ -1,4 +1,7 @@
 package com.example.servinow.features.explore
+import com.example.servinow.domain.model.Publication
+import com.example.servinow.domain.validation.publicationError
+
 import org.junit.Assert.*
 import org.junit.Test
 class PublicationTest {

@@ -1,4 +1,5 @@
 package com.example.servinow.features.recovery
+import com.example.servinow.domain.validation.RegistrationPasswordValidator
 
 import androidx.lifecycle.ViewModel
 import com.example.servinow.core.util.EmailValidator
@@ -12,7 +13,8 @@ data class RecoveryUiState(val email: String = "", val message: String? = null,
     val password: String = "", val confirmation: String = "",
     val step: RecoveryStep = RecoveryStep.EMAIL)
 
-class RecoveryViewModel : ViewModel() {
+@dagger.hilt.android.lifecycle.HiltViewModel
+class RecoveryViewModel @javax.inject.Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(RecoveryUiState())
     val uiState = _uiState.asStateFlow()
     fun restart() { _uiState.update { RecoveryUiState(email = it.email) } }
@@ -26,7 +28,7 @@ class RecoveryViewModel : ViewModel() {
     fun notifications() { _uiState.update { it.copy(message = "Inicia sesión para consultar tus avisos.") } }
     fun savePassword() {
         val state = _uiState.value
-        val error = com.example.servinow.features.register.RegistrationPasswordValidator.error(state.password)
+        val error = com.example.servinow.domain.validation.RegistrationPasswordValidator.error(state.password)
             ?: if (state.password != state.confirmation) "Las contraseñas no coinciden." else null
         _uiState.update { it.copy(message = error ?: "La contraseña es válida, pero aún no se ha guardado. Falta conectar la recuperación mediante un enlace seguro enviado a tu correo.") }
     }

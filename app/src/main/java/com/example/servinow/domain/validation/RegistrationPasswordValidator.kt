@@ -1,4 +1,4 @@
-package com.example.servinow.features.register
+package com.example.servinow.domain.validation
 
 /** Regla exclusiva del registro. Mostrar el resultado en un diálogo al enviar el formulario. */
 object RegistrationPasswordValidator {

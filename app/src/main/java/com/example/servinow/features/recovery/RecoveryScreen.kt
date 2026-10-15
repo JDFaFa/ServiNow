@@ -54,7 +54,7 @@ private fun RecoveryStepsScreen(state: RecoveryUiState, onEmail: (String) -> Uni
     modifier: Modifier = Modifier) {
     val sent = state.step == RecoveryStep.SENT
     Column(modifier.fillMaxSize().imePadding()) {
-        RecoveryHeader(if (sent) "Enlace enviado" else "Recuperar contraseña", onBack, onNotifications)
+        RecoveryHeader(if (sent) "Enlace enviado" else "Recuperar contraseña", onBack, onNotifications, showNotifications = false)
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(screenSpacing()),
             horizontalAlignment = if (sent) Alignment.CenterHorizontally else Alignment.Start) {
             Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(24.dp),

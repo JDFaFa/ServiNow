@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Caché local del compilador Kotlin
+.kotlin/

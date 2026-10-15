@@ -1,4 +1,6 @@
 package com.example.servinow.features.explore
+import com.example.servinow.domain.model.SearchFilters
+import com.example.servinow.domain.model.categories
 
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -26,18 +28,17 @@ import com.example.servinow.core.component.mapHeight
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-val publicationPages = setOf("create", "create-details", "post-location", "preview", "submitted", "mine", "edit", "rejected")
+val publicationPages = setOf("create", "create-details", "post-location", "preview", "submitted", "mine", "edit", "rejected", "delete-post")
 fun publicationTitle(page: String) = when(page) {
     "create" -> "Crear · servicio"; "create-details" -> "Descripción y fotos"; "post-location" -> "Ubicación del trabajo"
     "preview" -> "Revisar y publicar"; "submitted" -> "Publicación pendiente"; "mine" -> "Mis publicaciones"
-    "edit" -> "Editar publicación"; "rejected" -> "Publicación rechazada"; else -> "ServiNow."
+    "delete-post" -> "Eliminar publicación"; "edit" -> "Editar publicación"; "rejected" -> "Publicación rechazada"; else -> "ServiNow."
 }
 @Composable
 fun PublicationContent(page: String, vm: PublicationViewModel, go: (String) -> Unit) {
     val state by vm.state.collectAsState()
     val p = state.draft
     val context = LocalContext.current
-    var deleting by remember { mutableStateOf<Publication?>(null) }
     val photos = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         val accepted = uris.filter { uri -> runCatching {
             context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -47,10 +48,18 @@ fun PublicationContent(page: String, vm: PublicationViewModel, go: (String) -> U
     }
     state.message?.let { text -> AlertDialog(onDismissRequest = { vm.message(null) }, title = { Text("Publicación") },
         text = { Text(text) }, confirmButton = { TextButton(onClick = { vm.message(null) }) { Text("Entendido") } }) }
-    deleting?.let { post -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text("¿Eliminar publicación?") },
-        text = { Text(post.title) }, confirmButton = { TextButton(onClick = { vm.delete(post); deleting = null; go("mine") }) { Text("Eliminar") } },
-        dismissButton = { TextButton(onClick = { deleting = null }) { Text("Cancelar") } }) }
     when(page) {
+        "delete-post" -> {
+            Title("¿Eliminar esta publicación?")
+            Text("Se borrará del almacenamiento local. Esta acción no se puede deshacer.")
+            Text(p.title, fontWeight = FontWeight.Bold)
+            Text(p.status)
+            Button(onClick = { vm.delete(p); if (vm.state.value.posts.none { it.id == p.id }) go("mine") },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(16.dp)) { Text("Eliminar publicación") }
+            OutlinedButton(onClick = { go("mine") }, modifier = Modifier.fillMaxWidth()) { Text("Conservar publicación") }
+        }
+
         "create" -> {
             Step(1); Title("¿En qué necesitas ayuda?")
             Text("Elige una categoría y dale un nombre a tu trabajo.")
@@ -126,7 +135,7 @@ fun PublicationContent(page: String, vm: PublicationViewModel, go: (String) -> U
                         Text(post.description, maxLines = 3)
                         if (post.status == "Rechazada") TextButton(onClick = { vm.edit(post); go("rejected") }) { Text("Ver motivo y corregir") }
                         OutlinedButton(onClick = { vm.edit(post); go("edit") }) { Text("Editar") }
-                        TextButton(onClick = { deleting = post }) { Text("Eliminar") }
+                        TextButton(onClick = { vm.edit(post); go("delete-post") }) { Text("Eliminar") }
                     }
                 }
             }
@@ -147,7 +156,7 @@ fun PublicationContent(page: String, vm: PublicationViewModel, go: (String) -> U
                 if (!real) vm.start()
                 go(if (real) "edit" else "create")
             }
-            if (real) OutlinedButton(onClick = { deleting = p }) { Text("Eliminar publicación") }
+            if (real) OutlinedButton(onClick = { go("delete-post") }) { Text("Eliminar publicación") }
         }
     }
 }

@@ -76,7 +76,7 @@ private fun NewPasswordPreview() {
 }
 
 @Composable
-internal fun RecoveryHeader(title: String, onBack: () -> Unit, onNotifications: () -> Unit) {
+internal fun RecoveryHeader(title: String, onBack: () -> Unit, onNotifications: () -> Unit, showNotifications: Boolean = false) {
         Row(Modifier.fillMaxWidth().padding(horizontal = screenSpacing(), vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Surface(onClick = onBack, shape = RoundedCornerShape(16.dp),
@@ -88,7 +88,8 @@ internal fun RecoveryHeader(title: String, onBack: () -> Unit, onNotifications: 
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
             }
-            Surface(onClick = onNotifications, shape = RoundedCornerShape(16.dp),
+            if (!showNotifications) Spacer(Modifier.size(48.dp))
+            else Surface(onClick = onNotifications, shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.dp, Color(0xFFE1EAF5)), modifier = Modifier.size(48.dp)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(painterResource(R.drawable.ic_bell), "Avisos", modifier = Modifier.size(20.dp))

@@ -1,9 +1,15 @@
 package com.example.servinow.features.explore
+import com.example.servinow.domain.model.ExploreActivity
+import com.example.servinow.domain.model.SearchFilters
+import com.example.servinow.domain.validation.distanceKm
+import com.example.servinow.domain.validation.filterJobs
+import com.example.servinow.data.demo.exampleJobs
+
 import org.junit.Assert.*
 import org.junit.Test
 class ExploreTest {
     @Test fun interestTogglesWithoutDuplicateVotes() {
-        val vm = ExploreViewModel()
+        val vm = ExploreViewModel(FakeExploreRepository())
         vm.openJob(1)
         vm.toggleInterest()
         assertEquals(13, vm.state.value.jobs.first().votes)
@@ -11,7 +17,7 @@ class ExploreTest {
         assertEquals(12, vm.state.value.jobs.first().votes)
     }
     @Test fun commentsAreScopedAndEmptyCommentsRejected() {
-        val vm = ExploreViewModel()
+        val vm = ExploreViewModel(FakeExploreRepository())
         vm.openJob(1)
         vm.comment("  ")
         vm.postComment()
@@ -36,7 +42,7 @@ class ExploreTest {
         assertTrue(filterJobs(listOf(exampleJobs.first().copy(open = false)), "", SearchFilters()).isEmpty())
     }
     @Test fun draftOnlyAppliesOnConfirmation() {
-        val vm = ExploreViewModel()
+        val vm = ExploreViewModel(FakeExploreRepository())
         vm.editFilters()
         vm.draft(SearchFilters(category = "Plomería"))
         assertEquals(3, vm.state.value.results.size)
@@ -52,4 +58,11 @@ class ExploreTest {
         val distances = filterJobs(exampleJobs, "", f).map { distanceKm(it, f) }
         assertEquals(distances.sorted(), distances)
     }
+}
+
+private class FakeExploreRepository: com.example.servinow.domain.repository.ExploreRepository {
+ override fun jobs()=exampleJobs
+ private var activity=ExploreActivity()
+ override fun read()=activity
+ override fun save(activity:ExploreActivity):Boolean { this.activity=activity;return true }
 }

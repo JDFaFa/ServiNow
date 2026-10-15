@@ -21,7 +21,8 @@ data class LoginUiState(
 
 }
 
-class LoginViewModel : ViewModel() {
+@dagger.hilt.android.lifecycle.HiltViewModel
+class LoginViewModel @javax.inject.Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 

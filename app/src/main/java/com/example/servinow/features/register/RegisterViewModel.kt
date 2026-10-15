@@ -1,4 +1,5 @@
 package com.example.servinow.features.register
+import com.example.servinow.domain.validation.RegistrationPasswordValidator
 
 import androidx.lifecycle.ViewModel
 import com.example.servinow.core.util.EmailValidator
@@ -20,7 +21,8 @@ data class RegisterUiState(
     val locationConfirmed: Boolean = false,
 )
 
-class RegisterViewModel : ViewModel() {
+@dagger.hilt.android.lifecycle.HiltViewModel
+class RegisterViewModel @javax.inject.Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState = _uiState.asStateFlow()
     fun nameChanged(value: String) { _uiState.update { it.copy(name = value) } }

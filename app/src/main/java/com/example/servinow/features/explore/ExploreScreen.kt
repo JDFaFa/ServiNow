@@ -1,9 +1,15 @@
 package com.example.servinow.features.explore
+import com.example.servinow.domain.model.Job
+import com.example.servinow.domain.model.SearchFilters
+import com.example.servinow.domain.model.categories
+import com.example.servinow.domain.validation.distanceKm
 
+import com.example.servinow.features.account.*
 import com.example.servinow.core.component.screenSpacing
 import com.example.servinow.core.component.mapHeight
 
 import androidx.activity.compose.BackHandler
+import com.example.servinow.features.services.*
 import androidx.compose.ui.res.painterResource
 import com.example.servinow.R
 import androidx.compose.foundation.BorderStroke
@@ -26,8 +32,12 @@ import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
-fun ExploreRoute(vm: ExploreViewModel, publications: PublicationViewModel, onExit: () -> Unit) {
+fun ExploreRoute(vm: ExploreViewModel, publications: PublicationViewModel, services: ServiceViewModel, account: AccountViewModel, onRecover: () -> Unit, onDeleteAccount: () -> Unit, onExit: () -> Unit) {
     val state by vm.state.collectAsState()
+    val posts by publications.state.collectAsState()
+    val comments = state.comments.values.sumOf { it.size }
+    LaunchedEffect(posts.posts, comments) { account.sync(posts.posts, comments) }
+    val activeTab = when { state.page == "notifications" -> 2; state.page in accountPages -> 3; state.page in publicationPages || state.page in setOf("worker","my-offers","tracking") -> 1; else -> 0 }
     val scrollState = rememberScrollState()
     LaunchedEffect(state.page) { scrollState.scrollTo(0) }
     val pending = { vm.message("Esta sección se implementará en la siguiente etapa.") }
@@ -40,9 +50,9 @@ fun ExploreRoute(vm: ExploreViewModel, publications: PublicationViewModel, onExi
             modifier = Modifier.navigationBarsPadding().padding(12.dp).fillMaxWidth()) {
             Row(Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf("Inicio", "Mis trabajos", "Avisos", "Mi cuenta").forEachIndexed { index, label ->
-                    Surface(onClick = { if (index == 0) vm.page("home") else if (index == 1) vm.page("mine") else pending() },
-                        color = if ((index == 1 && state.page in publicationPages) || (index == 0 && state.page !in publicationPages)) Color.White else MaterialTheme.colorScheme.primary,
-                        contentColor = if ((index == 1 && state.page in publicationPages) || (index == 0 && state.page !in publicationPages)) MaterialTheme.colorScheme.primary else Color.White,
+                    Surface(onClick = { vm.page(listOf("home", "mine", "notifications", "account")[index]) },
+                        color = if (index == activeTab) Color.White else MaterialTheme.colorScheme.primary,
+                        contentColor = if (index == activeTab) MaterialTheme.colorScheme.primary else Color.White,
                         border = BorderStroke(1.dp, Color.White.copy(alpha = .4f)),
                         shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f)) {
                         Column(Modifier.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -55,11 +65,15 @@ fun ExploreRoute(vm: ExploreViewModel, publications: PublicationViewModel, onExi
         }
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
-            RecoveryHeader(if (state.page in publicationPages) publicationTitle(state.page) else when(state.page) { "comments" -> "Comentarios"; "detail" -> "Detalle del trabajo"; "filters" -> "Filtros de búsqueda"; "map" -> "Feed en mapa"; "location" -> "Elegir ubicación"; else -> "ServiNow." },
-                { if (state.page == "home") onExit() else vm.back() }, pending)
+            RecoveryHeader(if (state.page in accountPages) accountTitle(state.page) else if (state.page in servicePages) serviceTitle(state.page) else if (state.page in publicationPages) publicationTitle(state.page) else when(state.page) { "comments" -> "Comentarios"; "detail" -> "Detalle del trabajo"; "filters" -> "Filtros de búsqueda"; "map" -> "Feed en mapa"; "location" -> "Elegir ubicación"; else -> "ServiNow." },
+                { if (state.page == "home") onExit() else vm.back() }, { vm.page("notifications") }, showNotifications = state.page == "profile")
             Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(screenSpacing()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 when(state.page) {
+                    in accountPages -> AccountContent(state.page, account, publications, services, comments, vm::page, onRecover, onExit, onDeleteAccount)
+                    in servicePages -> ServiceContent(state.page, services, { target -> vm.page(if (target == "cv-preview") "cv" else target) }, vm::openJob)
+
                     in publicationPages -> PublicationContent(state.page, publications, vm::page)
+
                     "comments" -> {
                         Heading("Una conversación útil.")
                         Text(state.jobs.find { it.id == state.selectedId }?.title.orEmpty())
@@ -91,6 +105,7 @@ fun ExploreRoute(vm: ExploreViewModel, publications: PublicationViewModel, onExi
                             Text("${job.latitude}, ${job.longitude}", style = MaterialTheme.typography.bodySmall)
                             Primary(if (job.id in state.interested) "✓ Te interesa · ${job.votes}" else "Me interesa · ${job.votes}", vm::toggleInterest)
                             OutlinedButton(onClick = { vm.page("comments") }) { Text("Abrir conversación") }
+                            Primary("Enviar una oferta") { services.forJob("job-${job.id}",job.title); vm.page("offer") }
                             Heading("Comentarios")
                             val comments = state.comments[job.id].orEmpty()
                             if (comments.isEmpty()) Text("Sé la primera persona en aportar información.")
@@ -155,6 +170,8 @@ fun ExploreRoute(vm: ExploreViewModel, publications: PublicationViewModel, onExi
                                 Primary("Crear una publicación +") { publications.start(); vm.page("create") }
                             }
                         }
+                        OutlinedButton(onClick = { vm.page("worker") }, modifier = Modifier.fillMaxWidth()) { Text("Modo trabajador") }
+                        OutlinedButton(onClick = { services.forJob("demo-paint","Pintar una habitación"); vm.page("offers") }, modifier = Modifier.fillMaxWidth()) { Text("Probar ofertas recibidas · ejemplo") }
                         Text("Vista de demostración · publicaciones de ejemplo", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedTextField(state.query, vm::query, placeholder = { Text("Buscar un trabajo o servicio…") },
                             singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth())

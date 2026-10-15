@@ -1,4 +1,6 @@
 package com.example.servinow.features.explore
+import com.example.servinow.domain.model.Job
+import com.example.servinow.domain.model.SearchFilters
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -14,6 +16,7 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
     val select by rememberUpdatedState(onSelect)
     val location by rememberUpdatedState(onLocation)
     AndroidView(modifier = modifier, factory = { context -> WebView(context).apply {
+        layoutParams = android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT)
         settings.javaScriptEnabled = true
         settings.allowFileAccess = false
         settings.allowContentAccess = false
@@ -41,6 +44,13 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
                 return true
             }
         }
+        // Bundle the map engine into the document so it does not depend on resource interception.
+        val leafletCss = context.assets.open("map/leaflet.css").bufferedReader().use { it.readText() }
+        val leafletJs = context.assets.open("map/leaflet.js").bufferedReader().use { it.readText() }
+        setOnTouchListener { view, event ->
+            view.parent?.requestDisallowInterceptTouchEvent(event.actionMasked != android.view.MotionEvent.ACTION_UP && event.actionMasked != android.view.MotionEvent.ACTION_CANCEL)
+            false
+        }
         val markers = jobs.joinToString("\n") { j -> "L.marker([${j.latitude},${j.longitude}],{icon:L.divIcon({className:'price',html:'${j.price/1000} mil',iconSize:[70,32]})}).addTo(map).on('click',()=>window.location.href='servinow://job?id=${j.id}');" }
         val picker = if (onLocation != null) """
             let pin=L.circleMarker([${filters.latitude},${filters.longitude}],{color:'#1664c0'}).addTo(map);
@@ -48,13 +58,14 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
         """ else ""
         loadDataWithBaseURL("https://appassets.androidplatform.net/map/", """
           <!doctype html><html lang="es"><head><meta name="viewport" content="width=device-width,initial-scale=1">
-          <link rel="stylesheet" href="leaflet.css"><style>html,body,#map{height:100%;margin:0}.price{background:#1664c0;color:white;border-radius:12px;text-align:center;line-height:32px;font:bold 14px/32px sans-serif}#error{display:none;position:absolute;top:10px;left:50px;right:10px;background:white;padding:10px;z-index:1000;font:14px sans-serif}</style></head>
-          <body><div id="map"></div><div id="error">No se pudo cargar el mapa. Revisa tu conexión y vuelve a abrir esta vista.</div><script src="leaflet.js"></script><script>
+          <style>$leafletCss</style><style>html,body{height:100%;width:100%;margin:0}#map{position:absolute;inset:0;background:#edf5ff}.price{background:#1664c0;color:white;border-radius:12px;text-align:center;line-height:32px;font:bold 14px/32px sans-serif}#error{display:none;position:absolute;top:10px;left:50px;right:10px;background:white;padding:10px;z-index:1000;font:14px sans-serif}</style></head>
+          <body><div id="map"></div><div id="error">No se pudo cargar el mapa. Revisa tu conexión y vuelve a abrir esta vista.</div><script>$leafletJs</script><script>
           const map=L.map('map').setView([${filters.latitude},${filters.longitude}],13);
           const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
           tiles.on('tileerror',()=>document.getElementById('error').style.display='block');
           tiles.on('tileload',()=>document.getElementById('error').style.display='none');
           $markers $picker
+          new ResizeObserver(()=>map.invalidateSize()).observe(document.getElementById('map'));
           </script></body></html>
         """.trimIndent(), "text/html", "UTF-8", null)
     } }, onRelease = { it.stopLoading(); it.destroy() })

@@ -1,6 +1,6 @@
 package com.example.servinow.features.login
 
-import com.example.servinow.features.register.RegistrationPasswordValidator
+import com.example.servinow.domain.validation.RegistrationPasswordValidator
 import org.junit.Assert.*
 import org.junit.Test
 
