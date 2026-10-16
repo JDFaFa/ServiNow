@@ -419,16 +419,55 @@ fun CommunityRoute(vm: CommunityViewModel) {
                         }
                         "home",
                         "empty" -> {
-                            Title("Hola, ${me?.name?.substringBefore(' ')}.")
-                            Text("¿Qué resolvemos hoy?")
-                            Action("Publicar un trabajo", vm::startPost)
-                            Link("Quiero trabajar") { vm.go("worker") }
-                            Field("Buscar un trabajo", query, { query = it })
-                            Row {
-                                TextButton(onClick = { vm.go("filters") }) { Text("Filtros") }
-                                TextButton(onClick = { vm.go("map") }) { Text("Ver mapa") }
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(24.dp),
+                            ) {
+                                Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text("TU COMUNIDAD, A UN PASO", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                    Title("Hola, ${me?.name?.substringBefore(' ')}.")
+                                    Text("¿Qué resolvemos hoy?", style = MaterialTheme.typography.titleMedium)
+                                    Text("Encuentra ayuda para tus proyectos o comparte lo que sabes hacer.", style = MaterialTheme.typography.bodyMedium)
+                                }
                             }
-                            Text("${results.size} trabajos disponibles")
+                            Surface(
+                                onClick = vm::startPost,
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                shape = RoundedCornerShape(20.dp),
+                            ) {
+                                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Text("+", style = MaterialTheme.typography.headlineLarge)
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("Publicar un trabajo", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        Text("Cuéntanos qué necesitas y recibe ofertas.", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Text("→", style = MaterialTheme.typography.titleLarge)
+                                }
+                            }
+                            Surface(
+                                onClick = { vm.go("worker") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(20.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            ) {
+                                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("Quiero trabajar", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                        Text("Encuentra oportunidades para tus habilidades.", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Text("→", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                                }
+                            }
+                            Text("Explora los trabajos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Field("Buscar un trabajo", query, { query = it })
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                OutlinedButton(onClick = { vm.go("filters") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Filtros") }
+                                OutlinedButton(onClick = { vm.go("map") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Ver mapa") }
+                            }
+                            Text("${results.size} ${if (results.size == 1) "trabajo disponible" else "trabajos disponibles"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             if (results.isEmpty())
                                 Card {
                                     Text("No encontramos trabajos con esos filtros.")
@@ -948,11 +987,33 @@ fun CommunityRoute(vm: CommunityViewModel) {
                             }
                         }
                         "account" -> {
-                            Title(me?.name.orEmpty())
-                            Text(me?.email.orEmpty())
-                            Text(
-                                "${reputationLevel(s.points[me?.id]?:0)} · ${s.points[me?.id]?:0} puntos"
-                            )
+                            val accountPoints = s.points[me?.id] ?: 0
+                            val initials = me?.name.orEmpty().trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.take(2).joinToString("") { it.take(1).uppercase() }
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(24.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            ) {
+                                Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Surface(
+                                        modifier = Modifier.size(76.dp),
+                                        shape = RoundedCornerShape(38.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(initials, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    Text(me?.name.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    Text(me?.email.orEmpty(), style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(20.dp)) {
+                                        Text("${reputationLevel(accountPoints)} · $accountPoints puntos", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    }
+                                    TextButton(onClick = { vm.go("edit-account") }) { Text("Editar mis datos") }
+                                }
+                            }
+                            Text("Gestiona tu cuenta", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             listOf(
                                     "Datos personales" to "edit-account",
                                     "Perfil profesional" to "professional",
@@ -963,14 +1024,15 @@ fun CommunityRoute(vm: CommunityViewModel) {
                                 .forEach { (label, page) -> Link(label) { vm.go(page) } }
                             Link("Ver mi perfil") { me?.let { vm.profile(it.id) } }
                             Link("Recuperar contraseña") { vm.go("recovery") }
-                            Action("Cambiar usuario / salir", vm::logout)
                             if (me?.role == MemberRole.USER)
-                                TextButton(onClick = { vm.go("delete-account") }) {
-                                    Text(
-                                        "Eliminar mi cuenta",
-                                        color = MaterialTheme.colorScheme.error,
-                                    )
+                                OutlinedButton(
+                                    onClick = { vm.go("delete-account") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                ) {
+                                    Text("Eliminar mi cuenta", color = MaterialTheme.colorScheme.error)
                                 }
+                            Action("Cambiar usuario / salir", vm::logout)
                         }
                         "edit-account",
                         "professional" -> {
@@ -1062,78 +1124,145 @@ fun CommunityRoute(vm: CommunityViewModel) {
                             }
                         }
                         "dashboard" -> {
-                            Title("Tu actividad en ServiNow.")
                             val own = s.posts.filter { it.author == me?.id }
-                            listOf(
-                                    "Activas" to
-                                        own.count {
-                                            it.status in
-                                                listOf(PostStatus.VERIFIED, PostStatus.IN_PROGRESS)
-                                        },
-                                    "Finalizadas" to own.count { it.status == PostStatus.FINISHED },
-                                    "Pendientes de verificación" to
-                                        own.count { it.status == PostStatus.PENDING },
-                                    "Rechazadas" to own.count { it.status == PostStatus.REJECTED },
-                                )
-                                .forEach { (label, n) ->
-                                    Card {
-                                        Text(
-                                            n.toString(),
-                                            style = MaterialTheme.typography.headlineMedium,
+                            val completed = own.count { it.status == PostStatus.FINISHED }
+                            val points = s.points[me?.id] ?: 0
+                            Title("Tu actividad, de un vistazo")
+                            Text("Consulta cómo van tus publicaciones y tus aportes a la comunidad.", style = MaterialTheme.typography.bodyMedium)
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(22.dp),
+                            ) {
+                                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text("TUS PUBLICACIONES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                    Text(own.size.toString(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                                    Text(if (own.isEmpty()) "Tu actividad empieza con tu primera publicación." else "$completed de ${own.size} finalizadas", style = MaterialTheme.typography.titleMedium)
+                                    if (own.isNotEmpty()) {
+                                        LinearProgressIndicator(
+                                            progress = { completed.toFloat() / own.size },
+                                            modifier = Modifier.fillMaxWidth().height(8.dp),
+                                            trackColor = MaterialTheme.colorScheme.surface,
                                         )
-                                        Text(label)
+                                    }
+                                    Text("Resumen de las publicaciones disponibles en tu cuenta.", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            Text("¿Cómo van tus trabajos?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            val statuses = listOf(
+                                Triple("Buscando trabajador", own.count { it.status == PostStatus.VERIFIED }, "Ya pueden recibir ofertas"),
+                                Triple("En progreso", own.count { it.status == PostStatus.IN_PROGRESS }, "Con un trabajador asignado"),
+                                Triple("Finalizados", completed, "Trabajos que ya cerraste"),
+                                Triple("En revisión", own.count { it.status == PostStatus.PENDING }, "Esperan aprobación"),
+                            )
+                            statuses.chunked(2).forEach { row ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    row.forEach { (label, count, description) ->
+                                        Surface(
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(20.dp),
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                        ) {
+                                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Text(count.toString(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                                                Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                                Text(description, style = MaterialTheme.typography.bodySmall)
+                                            }
+                                        }
                                     }
                                 }
-                            Card {
-                                Text(
-                                    "${s.comments.count{it.author==me?.id}} comentarios realizados"
-                                )
-                                Text("${own.sumOf{it.interested.size}} votos recibidos")
-                                Text(
-                                    "${s.points[me?.id]?:0} puntos · ${reputationLevel(s.points[me?.id]?:0)}"
-                                )
                             }
-                            Action("Ver logros") { vm.go("achievements") }
+                            val rejected = own.count { it.status == PostStatus.REJECTED }
+                            if (rejected > 0) Card {
+                                Text("$rejected ${if (rejected == 1) "publicación necesita" else "publicaciones necesitan"} ajustes", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("Fueron rechazadas en la revisión. Consulta el motivo en Mis publicaciones y corrige los detalles.", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Action(if (own.isEmpty()) "Publicar mi primer trabajo" else "Ver mis publicaciones") { vm.go(if (own.isEmpty()) "create" else "mine") }
+                            Text("Tu aporte a la comunidad", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Card {
+                                listOf(
+                                    "Comentarios que escribiste" to s.comments.count { it.author == me?.id },
+                                    "Personas interesadas en tus publicaciones" to own.sumOf { it.interested.size },
+                                ).forEach { (label, value) ->
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                        Text(value.toString(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                Text("El interés se cuenta por publicación: una persona puede interesarse en varios trabajos.", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Card {
+                                Text("Tu reputación", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("${reputationLevel(points)} · $points puntos", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                Text("Descubre cuánto te falta para subir de nivel y conseguir nuevas insignias.", style = MaterialTheme.typography.bodyMedium)
+                                Action("Ver mis logros") { vm.go("achievements") }
+                            }
                         }
                         "achievements" -> {
                             val points = s.points[me?.id] ?: 0
-                            Title("Cada aporte cuenta.")
-                            Card {
-                                Text("${reputationLevel(points)} · $points puntos")
-                                val next =
-                                    when {
-                                        points < 100 -> 100
-                                        points < 500 -> 500
-                                        points < 1500 -> 1500
-                                        else -> points
+                            val levels = listOf("Vecino" to 0, "Colaborador" to 100, "Experto" to 500, "Referente" to 1500)
+                            val levelIndex = levels.indexOfLast { points >= it.second }.coerceAtLeast(0)
+                            val current = levels[levelIndex]
+                            val next = levels.getOrNull(levelIndex + 1)
+                            Title("Tu participación cuenta")
+                            Text("Ayuda a la comunidad, suma puntos y descubre tus logros.", style = MaterialTheme.typography.bodyMedium)
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(22.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text("TU NIVEL ACTUAL", style = MaterialTheme.typography.labelMedium)
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text(current.first, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                        Text("$points pts", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                     }
-                                Text(
-                                    if (next > points)
-                                        "Faltan ${next-points} puntos para el siguiente nivel."
-                                    else "Nivel máximo"
-                                )
+                                    LinearProgressIndicator(
+                                        progress = { if (next == null) 1f else ((points - current.second).toFloat() / (next.second - current.second)).coerceIn(0f, 1f) },
+                                        modifier = Modifier.fillMaxWidth().height(8.dp),
+                                    )
+                                    Text(if (next == null) "¡Llegaste al nivel más alto! Gracias por aportar." else "Te faltan ${next.second - points} puntos para ser ${next.first}.", style = MaterialTheme.typography.bodyMedium)
+                                }
                             }
-                            Text(
-                                "Vecino: 0–99\nColaborador: 100–499\nExperto: 500–1499\nReferente: 1500+"
-                            )
+                            Text("Tus insignias", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            val firstCount = s.posts.count { it.author == me?.id }
+                            val commentCount = s.comments.count { it.author == me?.id }
+                            val verifiedCount = s.rewards.count { it.startsWith("${me?.id}:verify:") }
                             listOf(
-                                    "first" to "Primera publicación",
-                                    "comments" to "10 comentarios",
-                                    "verified" to "10 publicaciones verificadas",
-                                )
-                                .forEach { (key, label) ->
-                                    Card {
-                                        Text(label, fontWeight = FontWeight.Bold)
-                                        Text(
-                                            if ("${me?.id}:badge:$key" in s.rewards)
-                                                "Desbloqueada ✓"
-                                            else "Por conseguir"
-                                        )
+                                Triple("first", "Tu primera publicación", Triple(firstCount, 1, "Publica un trabajo para empezar.")),
+                                Triple("comments", "Conversaciones que ayudan", Triple(commentCount, 10, "Comparte 10 comentarios en los trabajos.")),
+                                Triple("verified", "Publicaciones de confianza", Triple(verifiedCount, 10, "Consigue que el moderador apruebe 10 publicaciones.")),
+                            ).forEach { (key, label, details) ->
+                                val unlocked = "${me?.id}:badge:$key" in s.rewards
+                                val count = if (unlocked) details.second else details.first.coerceAtMost(details.second)
+                                Card {
+                                    Text(if (unlocked) "✓ LOGRO CONSEGUIDO" else "EN CAMINO", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                    Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text(if (unlocked) "¡Lo lograste! Esta insignia ya es tuya." else details.third, style = MaterialTheme.typography.bodyMedium)
+                                    if (!unlocked) {
+                                        LinearProgressIndicator(progress = { count.toFloat() / details.second }, modifier = Modifier.fillMaxWidth())
+                                        Text("$count de ${details.second} completados", style = MaterialTheme.typography.labelMedium)
                                     }
                                 }
-                            Text(
-                                "Crear +10 · Verificación +20 · Comentar +2 · Recibir un voto +1. No se repiten puntos por alternar un voto."
-                            )
+                            }
+                            Text("¿Cómo gano puntos?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Card {
+                                listOf("Publicar un trabajo" to "+10", "Tu publicación es aprobada" to "+20", "Escribir un comentario" to "+2", "Alguien marca Me interesa" to "+1").forEach { (label, value) ->
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                        Text("$value pts", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                Text("Cada acción cuenta una vez. Quitar y volver a marcar Me interesa no suma puntos adicionales.", style = MaterialTheme.typography.bodySmall)
+                            }
+                            var showLevels by rememberSaveable { mutableStateOf(false) }
+                            TextButton(onClick = { showLevels = !showLevels }) { Text(if (showLevels) "Ocultar niveles" else "Conocer todos los niveles") }
+                            if (showLevels) Card {
+                                levels.forEachIndexed { index, (name, minimum) ->
+                                    val maximum = levels.getOrNull(index + 1)?.second?.minus(1)
+                                    Text("$name · ${if (maximum == null) "$minimum o más" else "$minimum–$maximum"} puntos", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
                         }
                         "moderation" -> {
                             Title("Cuidemos la comunidad.")

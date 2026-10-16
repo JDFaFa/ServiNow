@@ -566,7 +566,7 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
                     "Hoy",
                 ),
             )
-        return CommunityState(
+        val initial = CommunityState(
             users,
             posts,
             offers,
@@ -602,7 +602,21 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
                         "p4",
                     ),
                 ),
-            points = mapOf("valentina" to 90, "andres" to 102, "laura" to 20),
+
+        )
+        val earned = mutableMapOf<String, Int>()
+        initial.posts.forEach { post ->
+            earned["${post.author}:create:${post.id}"] = 10
+            earned["${post.author}:badge:first"] = 0
+            if (post.status in listOf(PostStatus.VERIFIED, PostStatus.IN_PROGRESS, PostStatus.FINISHED)) {
+                earned["${post.author}:verify:${post.id}"] = 20
+            }
+            post.interested.forEach { voter -> earned["${post.author}:vote:${post.id}:$voter"] = 1 }
+        }
+        initial.comments.forEach { earned["${it.author}:comment:${it.id}"] = 2 }
+        return initial.copy(
+            rewards = earned.keys.toSet(),
+            points = initial.users.associate { user -> user.id to earned.filterKeys { it.startsWith("${user.id}:") }.values.sum() },
         )
     }
 }
