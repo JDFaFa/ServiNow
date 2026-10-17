@@ -1,6 +1,12 @@
 package com.example.servinow.features.community
 
-import androidx.activity.compose.BackHandler
+import com.example.servinow.features.welcome.WelcomeScreen
+import com.example.servinow.features.welcome.OnboardingScreen
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.servinow.navigation.NavigationEffects
+import com.example.servinow.navigation.ServiNowNavHost
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -171,13 +177,16 @@ private fun title(page: String) =
     }
 
 @Composable
-fun CommunityRoute(vm: CommunityViewModel) {
+fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
+    val navController = rememberNavController()
+    val entry by navController.currentBackStackEntryAsState()
+    val currentPage = entry?.destination?.route ?: "welcome"
+    NavigationEffects(navController, vm)
+    LaunchedEffect(currentPage) { vm.destinationChanged(currentPage) }
     val s by vm.state.collectAsState()
     val u by vm.ui.collectAsState()
     val me = s.me
     val post = s.posts.find { it.id == u.postId }
-    val scroll = rememberScrollState()
-    LaunchedEffect(u.page) { scroll.scrollTo(0) }
     var query by rememberSaveable { mutableStateOf("") }
     var category by rememberSaveable { mutableStateOf("Todas") }
     var city by rememberSaveable { mutableStateOf("Todas") }
@@ -218,7 +227,6 @@ fun CommunityRoute(vm: CommunityViewModel) {
                 if (order == "Más relevantes") it.sortedByDescending { it.interested.size }
                 else it.sortedByDescending { it.createdAt }
             }
-    BackHandler(enabled = u.page != "login") { vm.back() }
     u.message?.let { msg ->
         AlertDialog(
             onDismissRequest = { vm.message(null) },
@@ -229,7 +237,7 @@ fun CommunityRoute(vm: CommunityViewModel) {
     }
     Scaffold(
         bottomBar = {
-            if (me != null) {
+            if (me != null && currentPage !in setOf("welcome", "onboarding")) {
                 Surface(
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(26.dp),
@@ -257,10 +265,10 @@ fun CommunityRoute(vm: CommunityViewModel) {
                             Surface(
                                 onClick = { vm.go(page) },
                                 color =
-                                    if (u.page == page) MaterialTheme.colorScheme.surface
+                                    if (currentPage == page) MaterialTheme.colorScheme.surface
                                     else MaterialTheme.colorScheme.primary,
                                 contentColor =
-                                    if (u.page == page) MaterialTheme.colorScheme.primary
+                                    if (currentPage == page) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onPrimary,
                                 shape = RoundedCornerShape(18.dp),
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
@@ -293,18 +301,23 @@ fun CommunityRoute(vm: CommunityViewModel) {
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
-            RecoveryHeader(
-                title(u.page),
+            if (currentPage !in setOf("welcome", "onboarding")) RecoveryHeader(
+                title(currentPage),
                 vm::back,
                 { vm.go("notifications") },
-                showNotifications = u.page in setOf("profile", "account"),
+                showNotifications = currentPage in setOf("profile", "account"),
             )
+            ServiNowNavHost(navController, Modifier.weight(1f)) { destination ->
+                val u = u.copy(page = destination)
+                val scroll = rememberScrollState()
             Column(
                 Modifier.fillMaxSize().verticalScroll(scroll).padding(screenSpacing()),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 key(u.page) {
                     when (u.page) {
+                        "welcome" -> WelcomeScreen(onStart = { vm.go("onboarding") }, onLogin = { vm.go("login") })
+                        "onboarding" -> OnboardingScreen(onFinish = { vm.go("register") }, onLogin = { vm.go("login") })
                         "login",
                         "mod-login" -> {
                             var email by rememberSaveable { mutableStateOf("") }
@@ -623,6 +636,8 @@ fun CommunityRoute(vm: CommunityViewModel) {
                             if (d == null) Text("Comienza una nueva solicitud.")
                             else
                                 when (u.page) {
+                        "welcome" -> WelcomeScreen(onStart = { vm.go("onboarding") }, onLogin = { vm.go("login") })
+                        "onboarding" -> OnboardingScreen(onFinish = { vm.go("register") }, onLogin = { vm.go("login") })
                                     "create" -> {
                                         Text(
                                             "Paso 1 de 4",
@@ -1319,6 +1334,7 @@ fun CommunityRoute(vm: CommunityViewModel) {
                         else -> Text("Selecciona una opción del menú.")
                     }
                 }
+            }
             }
         }
     }

@@ -28,6 +28,7 @@ class DeliveryEvidenceTest {
 
     private fun shot(name: String) {
         compose.waitForIdle()
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         Thread.sleep(400)
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
@@ -56,12 +57,38 @@ class DeliveryEvidenceTest {
 
     @Test
     fun captureFunctionalDelivery() {
+        shot("00-welcome")
+        compose.onNodeWithText("Empezar").performScrollTo().performClick()
+        shot("00-onboarding-1")
+        compose.onNodeWithText("Siguiente").performScrollTo().performClick()
+        shot("00-onboarding-2")
+        compose.onNodeWithText("Siguiente").performScrollTo().performClick()
+        shot("00-onboarding-3")
+        compose.onNodeWithText("Ya tengo cuenta").performScrollTo().performClick()
         shot("01-login")
         page("register", "02-register")
-        compose.onNodeWithText("Nombre completo").performTextInput("Usuario Evaluacion")
-        compose.onNodeWithText("Correo electrónico").performTextInput("evaluacion@gmail.com")
-        compose.onNodeWithText("Contraseña", substring = false).performTextInput("Prueba123!")
-        compose.onNodeWithText("Confirmar contraseña").performTextInput("Prueba123!")
+        compose.onAllNodesWithText("Crear cuenta").onLast().performScrollTo().performClick()
+        compose.onNodeWithText("Escribe un nombre de 2 a 100 caracteres.").assertIsDisplayed()
+        shot("50-empty-form")
+        act { message(null) }
+        compose.onNodeWithText("Nombre completo").performScrollTo().performTextInput("Usuario Evaluacion")
+        compose.onNodeWithText("Correo electrónico").performScrollTo().performTextInput("correo-invalido")
+        compose.onAllNodesWithText("Crear cuenta").onLast().performScrollTo().performClick()
+        compose.onNodeWithText("Escribe un correo válido, como nombre@gmail.com").assertIsDisplayed()
+        shot("51-invalid-email")
+        act { message(null) }
+        compose.onNodeWithText("Correo electrónico").performScrollTo().performTextReplacement("evaluacion@gmail.com")
+        compose.onNodeWithText("Contraseña", substring = false).performScrollTo().performTextInput("123")
+        compose.onAllNodesWithText("Crear cuenta").onLast().performScrollTo().performClick()
+        shot("52-password-rules")
+        act { message(null) }
+        compose.onNodeWithText("Contraseña", substring = false).performScrollTo().performTextReplacement("Prueba123!")
+        compose.onNodeWithText("Confirmar contraseña").performScrollTo().performTextInput("Otra123!")
+        compose.onAllNodesWithText("Crear cuenta").onLast().performScrollTo().performClick()
+        compose.onNodeWithText("Las contraseñas no coinciden.").assertIsDisplayed()
+        shot("53-password-mismatch")
+        act { message(null) }
+        compose.onNodeWithText("Confirmar contraseña").performScrollTo().performTextReplacement("Prueba123!")
         compose.onNodeWithText("Crear cuenta", substring = false).let {
             /* Header and action share text; choose button node. */
         }
@@ -70,10 +97,22 @@ class DeliveryEvidenceTest {
         shot("03-registration-success")
         act { message(null) }
         compose.onNodeWithText("Correo electrónico").performTextInput("evaluacion@gmail.com")
-        compose.onNodeWithText("Contraseña", substring = false).performTextInput("Prueba123!")
+        compose.onNodeWithText("Contraseña", substring = false).performTextInput("Incorrecta123!")
+        compose.onNodeWithText("Iniciar sesión").performScrollTo().performClick()
+        shot("54-login-error")
+        act { message(null) }
+        compose.onNodeWithText("Contraseña", substring = false).performScrollTo().performTextReplacement("Prueba123!")
         compose.onNodeWithText("Iniciar sesión").performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals("evaluacion@gmail.com", vm.state.value.me?.email)
+        act {
+            startPost()
+            draft(ui.value.draft!!.copy(title = "Ajustar una ventana", description = "La ventana de la sala no cierra y necesito ajustar las bisagras.", budget = 50000, hasImage = true))
+            savePost()
+            message(null)
+            go("notifications")
+        }
+        shot("55-achievement-notice")
         act { logout() }
         page("recovery", "05-recovery")
         act { recovery("valentina@gmail.com") }
@@ -171,8 +210,17 @@ class DeliveryEvidenceTest {
             login("valentina@gmail.com", "Nueva123!")
         }
         page("notifications", "33-notifications")
+        compose.onAllNodesWithText("Marcar leído").onFirst().performScrollTo().performClick()
+        shot("56-read-notice")
+        compose.onAllNodesWithText("Ver detalle").onFirst().performScrollTo().performClick()
+        shot("57-notice-detail")
         page("dashboard", "34-dashboard")
+        compose.onNodeWithText("Tu aporte a la comunidad").performScrollTo()
+        shot("34-dashboard-bottom")
         page("achievements", "35-achievements")
+        compose.onNodeWithText("Conocer todos los niveles").performScrollTo().performClick()
+        compose.onNodeWithText("Referente · 1500 o más puntos").performScrollTo()
+        shot("35-levels")
         page("account", "36-account")
         page("edit-account", "37-edit-account")
         page("delete-account", "38-delete-account")

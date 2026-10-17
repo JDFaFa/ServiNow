@@ -9,7 +9,7 @@ La guía de clase es https://caflorezvi.github.io/guias-apps-moviles/12.view-mod
 `InMemoryCommunityRepository`. Hilt comparte una instancia del repositorio; un
 `StateFlow<CommunityState>` mantiene relacionadas las publicaciones, usuarios,
 ofertas, comentarios, reseñas, avisos y puntos. El ViewModel traduce eventos de UI
-en operaciones y conserva la navegación. El repositorio valida rol, propiedad y
+en operaciones y emite solicitudes de navegación. Navigation Compose conserva la pila de destinos. El repositorio valida rol, propiedad y
 estado antes de modificar los datos. Los modelos del recorrido están en `Community.kt`.
 
 Las cuentas, el registro y el restablecimiento de contraseñas son funcionales dentro
@@ -56,9 +56,21 @@ si la escritura funciona, el ViewModel actualiza las publicaciones de la pantall
 `@AndroidEntryPoint` integra `MainActivity`. Cada `@HiltViewModel` recibe sus
 interfaces por constructor con `@Inject`. `RepositoryModule` usa `@Binds` para
 seleccionar implementaciones locales, compartidas con alcance `@Singleton`.
-La actividad obtiene ViewModels con `ViewModelProvider`, cuyo factory está
-integrado por Hilt. Se mantiene su alcance de actividad porque la navegación
-actual aún no utiliza Navigation Compose; no hace falta `hiltViewModel()` aquí.
+`CommunityRoute` obtiene el ViewModel compartido con `hiltViewModel()` desde Compose.
+La Activity solo monta el tema y la raíz de la interfaz. El alcance compartido conserva
+el borrador y los datos del flujo mientras cada destino mantiene su estado de formulario.
+
+## Navegación con Compose
+
+`navigation/ServiNowNavigation.kt` define las rutas, `ServiNowNavHost` y el consumo de
+eventos. `rememberNavController()` administra la pila real y el botón Atrás del sistema.
+Los botones del encabezado solicitan `popBackStack()`. Las pestañas vuelven al inicio
+del rol y evitan duplicados; entrar o salir limpia la pila para no volver al login
+tras entrar ni a pantallas privadas después de salir.
+`CommunityViewModel.go()` y `back()` emiten eventos mediante un Channel, sin mantener
+un historial paralelo. `CommunityUi.page` refleja el destino actual para observación
+y pruebas; no determina el contenido del NavHost.
+Los filtros se mantienen por encima del NavHost y los formularios dentro de cada destino.
 
 ## Persistencia y compatibilidad
 

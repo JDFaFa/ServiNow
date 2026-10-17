@@ -1,5 +1,8 @@
 package com.example.servinow.features.community
 
+import com.example.servinow.navigation.NavigationEvent
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import androidx.lifecycle.ViewModel
 import com.example.servinow.domain.model.*
 import com.example.servinow.domain.repository.CommunityRepository
@@ -10,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class CommunityUi(
-    val page: String = "login",
+    val page: String = "welcome",
     val postId: String = "p1",
     val profileId: String = "andres",
     val offerId: String = "o1",
@@ -25,24 +28,20 @@ class CommunityViewModel @Inject constructor(private val repository: CommunityRe
     val state = repository.state
     private val _ui = MutableStateFlow(CommunityUi())
     val ui = _ui.asStateFlow()
-    private val history = mutableListOf<String>()
+    private val navigationEvents = Channel<NavigationEvent>(Channel.UNLIMITED)
+    val navigation = navigationEvents.receiveAsFlow()
 
     fun go(page: String) {
-        if (page == _ui.value.page) return
-        if (page in setOf("home", "mine", "account", "notifications", "moderation", "login"))
-            history.clear()
-        else history.add(_ui.value.page)
-        _ui.value = _ui.value.copy(page = page)
+        navigationEvents.trySend(NavigationEvent.Open(page))
     }
 
     fun back() {
-        _ui.value =
-            _ui.value.copy(
-                page =
-                    if (history.isNotEmpty()) history.removeAt(history.lastIndex)
-                    else if (state.value.me == null) "login"
-                    else if (state.value.me?.role == MemberRole.MODERATOR) "moderation" else "home"
-            )
+        navigationEvents.trySend(NavigationEvent.Back)
+    }
+
+    // This is a reflection of NavController, not a second navigation stack.
+    fun destinationChanged(page: String) {
+        _ui.value = _ui.value.copy(page = page)
     }
 
     fun message(text: String?) {
@@ -64,7 +63,6 @@ class CommunityViewModel @Inject constructor(private val repository: CommunityRe
 
     fun logout() {
         repository.logout()
-        history.clear()
         go("login")
     }
 

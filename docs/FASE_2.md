@@ -5,7 +5,9 @@ Integrantes: Santiago Dorado, Juan David Saza y Fabián López.
 ## Ejecutar
 
 Abrir este proyecto en Android Studio y ejecutar `app`.
-La entrada activa es `MainActivity` → `CommunityRoute` → `CommunityViewModel`.
+La entrada activa es `MainActivity` → `CommunityRoute` → `ServiNowNavHost`.
+Navigation Compose gestiona los destinos y la pila de regreso; `hiltViewModel()`
+proporciona el `CommunityViewModel` compartido desde Compose.
 Hilt inyecta `CommunityRepository`, implementado por `InMemoryCommunityRepository`.
 Sus modelos están en `domain/model/Community.kt`. La UI observa un StateFlow único.
 
@@ -67,3 +69,13 @@ Consultar el PDF para el registro del apoyo de IA, dificultades y correcciones.
 ## Documento de entrega
 
 [Descargar PDF de la segunda fase](entrega/ServiNow-entrega-fase-2.pdf)
+
+## Identidad y bienvenida
+
+El ícono adaptable usa un símbolo vectorial propio de casa y rayo, con fondo azul.
+Android 12 y posteriores muestran el logo durante el arranque. La primera pantalla
+es `welcome`, con acceso a `onboarding` (tres pasos), registro o login.
+Se puede omitir la guía; Anterior y el botón Atrás permiten recorrer los pasos.
+El paso actual sobrevive a la recreación de la Activity con `rememberSaveable`.
+La bienvenida se muestra en cada nuevo inicio del proceso: esta fase no guarda
+una preferencia persistente de onboarding completado.

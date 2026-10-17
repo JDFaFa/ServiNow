@@ -1,0 +1,1 @@
+<resources><style name="Theme.ServiNow" parent="android:Theme.Material.Light.NoActionBar"><item name="android:windowSplashScreenBackground">#FFFFFF</item><item name="android:windowSplashScreenAnimatedIcon">@drawable/servinow_logo</item><item name="android:windowLightStatusBar">true</item></style></resources>
