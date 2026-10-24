@@ -17,7 +17,8 @@ import org.junit.Test
  * events.
  */
 class DeliveryEvidenceTest {
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule val rules: org.junit.rules.TestRule = org.junit.rules.RuleChain.outerRule(FreshDemoRule()).around(compose)
     private val vm
         get() = ViewModelProvider(compose.activity)[CommunityViewModel::class.java]
 

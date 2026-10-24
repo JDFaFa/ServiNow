@@ -91,6 +91,12 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
         return null
     }
 
+    override fun restoreSession(session: UserSession): Boolean {
+        val user = state.value.users.find { it.id == session.userId && it.role == session.role } ?: return false
+        _state.value = state.value.copy(currentUser = user.id)
+        return true
+    }
+
     override fun logout() {
         _state.value = state.value.copy(currentUser = null)
     }
@@ -154,7 +160,7 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
                 post.longitude !in -180.0..180.0
         )
             return "La ubicación no es válida."
-        if (!post.hasImage) return "Selecciona una imagen de ejemplo para esta fase."
+        if (!post.hasImage) return "Selecciona una foto del trabajo."
         val old = state.value.posts.find { it.id == post.id }
         if (old != null && old.author != me.id) return "Solo el autor puede editar."
         if (old?.status in listOf(PostStatus.IN_PROGRESS, PostStatus.FINISHED))

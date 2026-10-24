@@ -6,7 +6,8 @@ import org.junit.Rule
 import org.junit.Test
 
 class WelcomeFlowTest {
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule val rules: org.junit.rules.TestRule = org.junit.rules.RuleChain.outerRule(FreshDemoRule()).around(compose)
     private fun click(text: String) = compose.onNodeWithText(text).performScrollTo().performClick()
 
     @Test fun walkthroughPreservesStepAndOpensRegistration() {

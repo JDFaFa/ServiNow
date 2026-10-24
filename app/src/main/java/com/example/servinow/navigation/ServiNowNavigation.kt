@@ -61,8 +61,8 @@ fun NavigationEffects(controller: NavHostController, vm: CommunityViewModel) {
 }
 
 @Composable
-fun ServiNowNavHost(controller: NavHostController, modifier: Modifier = Modifier, content: @Composable (String) -> Unit) {
-    NavHost(controller, startDestination = Routes.WELCOME, modifier = modifier) {
+fun ServiNowNavHost(controller: NavHostController, modifier: Modifier = Modifier, startDestination: String = Routes.WELCOME, content: @Composable (String) -> Unit) {
+    NavHost(controller, startDestination = startDestination, modifier = modifier) {
         Routes.all.forEach { route -> composable(route) { content(route) } }
     }
 }

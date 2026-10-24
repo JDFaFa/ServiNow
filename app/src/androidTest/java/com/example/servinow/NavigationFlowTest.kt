@@ -9,7 +9,8 @@ import org.junit.Rule
 import org.junit.Test
 
 class NavigationFlowTest {
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule val rules: org.junit.rules.TestRule = org.junit.rules.RuleChain.outerRule(FreshDemoRule()).around(compose)
     private val vm get() = ViewModelProvider(compose.activity)[CommunityViewModel::class.java]
     private fun at(route: String) {
         compose.waitUntil(10_000) { vm.ui.value.page == route }

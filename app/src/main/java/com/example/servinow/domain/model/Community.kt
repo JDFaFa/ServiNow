@@ -28,6 +28,7 @@ data class Member(
     val training: String = "",
     val skills: String = "",
     val years: Int = 0,
+    val photoUri: String? = null,
 )
 
 data class WorkPost(
@@ -41,6 +42,7 @@ data class WorkPost(
     val longitude: Double,
     val budget: Long,
     val hasImage: Boolean = true,
+    val imageUri: String? = null,
     val status: PostStatus = PostStatus.PENDING,
     val reason: String = "",
     val assigned: String? = null,

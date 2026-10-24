@@ -13,6 +13,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modifier,
     onSelect: (Int) -> Unit, onLocation: ((Double, Double) -> Unit)? = null) {
+    val currentJobs by rememberUpdatedState(jobs)
     val select by rememberUpdatedState(onSelect)
     val location by rememberUpdatedState(onLocation)
     AndroidView(modifier = modifier, factory = { context -> WebView(context).apply {
@@ -32,7 +33,7 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val u = request.url
                 if (request.isForMainFrame && u.scheme == "servinow") {
-                    if (u.host == "job") u.getQueryParameter("id")?.toIntOrNull()?.let { id -> if (jobs.any { it.id == id }) select(id) }
+                    if (u.host == "job") u.getQueryParameter("id")?.toIntOrNull()?.let { id -> if (currentJobs.any { it.id == id }) select(id) }
                     if (u.host == "point") {
                         val lat = u.getQueryParameter("lat")?.toDoubleOrNull()
                         val lng = u.getQueryParameter("lng")?.toDoubleOrNull()
@@ -54,6 +55,7 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
         val markers = jobs.joinToString("\n") { j -> "L.marker([${j.latitude},${j.longitude}],{icon:L.divIcon({className:'price',html:'${j.price/1000} mil',iconSize:[70,32]})}).addTo(map).on('click',()=>window.location.href='servinow://job?id=${j.id}');" }
         val picker = if (onLocation != null) """
             let pin=L.circleMarker([${filters.latitude},${filters.longitude}],{color:'#1664c0'}).addTo(map);
+            window.setPicked=(lat,lng)=>{pin.setLatLng([lat,lng]);map.panTo([lat,lng]);};
             map.on('click',e=>{pin.setLatLng(e.latlng);window.location.href='servinow://point?lat='+e.latlng.lat+'&lng='+e.latlng.lng;});
         """ else ""
         loadDataWithBaseURL("https://appassets.androidplatform.net/map/", """
@@ -68,5 +70,7 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
           new ResizeObserver(()=>map.invalidateSize()).observe(document.getElementById('map'));
           </script></body></html>
         """.trimIndent(), "text/html", "UTF-8", null)
-    } }, onRelease = { it.stopLoading(); it.destroy() })
+    } }, update = { view ->
+        if (onLocation != null) view.evaluateJavascript("window.setPicked && window.setPicked(${filters.latitude},${filters.longitude});", null)
+    }, onRelease = { it.stopLoading(); it.destroy() })
 }

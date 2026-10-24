@@ -82,7 +82,7 @@ internal fun RecoveryHeader(title: String, onBack: () -> Unit, onNotifications: 
             Surface(onClick = onBack, shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.dp, Color(0xFFE1EAF5)), modifier = Modifier.size(48.dp)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(painterResource(R.drawable.ic_back), "Volver", modifier = Modifier.size(20.dp))
+                    Icon(painterResource(R.drawable.ic_back), androidx.compose.ui.res.stringResource(R.string.ui_back_a785), modifier = Modifier.size(20.dp))
                 }
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -92,7 +92,7 @@ internal fun RecoveryHeader(title: String, onBack: () -> Unit, onNotifications: 
             else Surface(onClick = onNotifications, shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.dp, Color(0xFFE1EAF5)), modifier = Modifier.size(48.dp)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(painterResource(R.drawable.ic_bell), "Avisos", modifier = Modifier.size(20.dp))
+                    Icon(painterResource(R.drawable.ic_bell), androidx.compose.ui.res.stringResource(R.string.ui_notifications_fa1e), modifier = Modifier.size(20.dp))
                     Box(Modifier.align(Alignment.TopEnd).padding(8.dp).size(6.dp)
                         .background(Color(0xFFA65B11), CircleShape))
                 }

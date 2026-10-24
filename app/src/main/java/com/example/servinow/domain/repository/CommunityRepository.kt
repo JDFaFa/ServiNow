@@ -11,6 +11,8 @@ interface CommunityRepository {
 
     fun login(email: String, password: String, moderator: Boolean = false): String?
 
+    fun restoreSession(session: UserSession): Boolean
+
     fun logout()
 
     fun register(name: String, email: String, password: String, confirmation: String): String?
