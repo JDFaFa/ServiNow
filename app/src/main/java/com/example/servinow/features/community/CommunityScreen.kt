@@ -1057,6 +1057,8 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                 ) {
                                     Text(resources.getString(R.string.ui_delete_my_account_e425), color = MaterialTheme.colorScheme.error)
                                 }
+                            Text(resources.getString(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            com.example.servinow.core.component.LanguageSetting()
                             Action(resources.getString(R.string.ui_switch_user_sign_out_e760), vm::logout)
                         }
                         "edit-account",

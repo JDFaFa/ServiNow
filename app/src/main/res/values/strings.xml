@@ -425,4 +425,9 @@
 <string name="location_disabled">Turn on your device location and try again.</string>
 <string name="location_unavailable">Could not get your location. Try outdoors or select a point on the map.</string>
 <string name="location_settings">Open settings</string>
+<string name="settings_title">Settings</string>
+<string name="language_title">Language</string>
+<string name="language_description">Choose your app language. Your choice is saved automatically.</string>
+<string name="language_system">Use device language</string>
+<string name="language_cancel">Cancel</string>
 </resources>

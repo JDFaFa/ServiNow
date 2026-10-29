@@ -6,7 +6,15 @@ import javax.inject.Inject
 import com.example.servinow.R
 
 class ResourceProvider @Inject constructor(@ApplicationContext private val context: Context) {
-    fun translate(value: String): String = localizedLabel(context.resources, value)
+    fun translate(value: String): String {
+        val locales = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales()
+        val localized = if (android.os.Build.VERSION.SDK_INT < 33 && !locales.isEmpty) {
+            val configuration = android.content.res.Configuration(context.resources.configuration)
+            configuration.setLocales(android.os.LocaleList.forLanguageTags(locales.toLanguageTags()))
+            context.createConfigurationContext(configuration)
+        } else context
+        return localizedLabel(localized.resources, value)
+    }
 }
 
 fun localizedLabel(resources: android.content.res.Resources, value: String): String = when (value) {

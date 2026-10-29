@@ -80,3 +80,9 @@ El PDF de la entrega anterior no se regeneró con estas modificaciones.
 - No se ha agregado ningún token de Mapbox ni se ha probado su conexión autenticada.
 
 Verificación de esta actualización: `assembleDebug`, `assembleDebugAndroidTest` y 49 pruebas unitarias aprobados. Se agregó `MapSelectionTest.currentGpsLocationUpdatesDraft`, habilitada explícitamente con el argumento de instrumentación `gpsFix=true` y una posición suministrada por el anfitrión (`adb emu geo fix -74.08 4.65`). Esta prueba nueva no se pudo ejecutar en esta sesión: no hay `/dev/kvm` y el emulador por software no llegó a tener disponible el servicio de paquetes. No se afirma haber verificado GPS ni direcciones reales en un dispositivo en esta actualización.
+
+## Selector de idioma — 29 de octubre de 2026
+
+Mi cuenta → Configuración → Idioma permite elegir Español, English o el idioma del dispositivo. Usa AppCompatDelegate y almacenamiento automático de locales, con integración en los ajustes de Android 13+ y compatibilidad para versiones anteriores. La Activity y ambos temas (general y Android 12+) se adaptaron a AppCompat. Las validaciones usan el idioma elegido también en Android anterior a 13.
+
+Verificación: compilación y pruebas unitarias correctas; pruebas instrumentadas LanguageSettingTest y NavigationFlowTest aprobadas (2 casos). Se comprobó cambio español → inglés → español, conservación del usuario activo y selección tras recrear Activity. La versión actualizada quedó instalada en el emulador.

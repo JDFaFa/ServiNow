@@ -424,4 +424,9 @@
 <string name="location_disabled">Activa la ubicación del dispositivo y vuelve a intentarlo.</string>
 <string name="location_unavailable">No se pudo obtener tu ubicación. Intenta al aire libre o selecciona un punto en el mapa.</string>
 <string name="location_settings">Abrir ajustes</string>
+<string name="settings_title">Configuración</string>
+<string name="language_title">Idioma</string>
+<string name="language_description">Elige el idioma de la aplicación. Tu selección se guarda automáticamente.</string>
+<string name="language_system">Usar idioma del dispositivo</string>
+<string name="language_cancel">Cancelar</string>
 </resources>
