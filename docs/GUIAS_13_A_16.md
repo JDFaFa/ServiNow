@@ -18,7 +18,7 @@ En `local.properties`, que está excluido de Git, agregar:
 MAPBOX_ACCESS_TOKEN=pk.TU_TOKEN_PUBLICO
 ```
 
-Sincronizar y recompilar. Nunca colocar un token secreto `sk.` en la aplicación. Cada integrante configura su propia copia local. Sin token se conserva el mapa OpenStreetMap existente; el botón de ubicación actual del componente Mapbox queda disponible al configurarlo.
+Sincronizar y recompilar. Nunca colocar un token secreto `sk.` en la aplicación. Cada integrante configura su propia copia local. Sin token se usa OpenStreetMap con el botón «Mi ubicación» conectado al GPS/red de Android. Las direcciones se consultan mediante Geocoder del dispositivo. El token solo es necesario para activar el proveedor Mapbox.
 
 La integración compila sin token. No se ha verificado una conexión autenticada a Mapbox ni resultados reales de su geocodificación: falta configurar la cuenta del equipo. La API usa resultados temporales únicamente para mostrarlos; guardarlos permanentemente requiere condiciones adicionales del servicio.
 
@@ -68,3 +68,15 @@ adb shell am instrument -w -e class 'com.example.servinow.SessionRestartTest#res
 ```
 
 El PDF de la entrega anterior no se regeneró con estas modificaciones.
+
+
+## Actualización de ubicación — 29 de octubre de 2026
+
+- «Mi ubicación» disponible en el mapa OpenStreetMap, sin credenciales externas. Solicita ubicación precisa o aproximada únicamente al pulsar el botón.
+- Una posición nueva actualiza el centro y la selección del mapa. El formulario conserva las coordenadas elegidas.
+- La petición dura como máximo 20 segundos y retira listeners al terminar, cancelar o salir de la pantalla. No hay seguimiento en segundo plano.
+- Si la ubicación está apagada se ofrece abrir Ajustes. Si se deniega el permiso o no hay señal, se informa al usuario y se mantiene la selección manual.
+- Sin token se consulta Geocoder de Android; necesita un proveedor disponible y puede no devolver dirección. En Android 13+ la consulta es asíncrona con espera máxima de 8 segundos; en versiones anteriores se ejecuta fuera del hilo de interfaz. Las coordenadas siguen siendo utilizables si no hay respuesta.
+- No se ha agregado ningún token de Mapbox ni se ha probado su conexión autenticada.
+
+Verificación de esta actualización: `assembleDebug`, `assembleDebugAndroidTest` y 49 pruebas unitarias aprobados. Se agregó `MapSelectionTest.currentGpsLocationUpdatesDraft`, habilitada explícitamente con el argumento de instrumentación `gpsFix=true` y una posición suministrada por el anfitrión (`adb emu geo fix -74.08 4.65`). Esta prueba nueva no se pudo ejecutar en esta sesión: no hay `/dev/kvm` y el emulador por software no llegó a tener disponible el servicio de paquetes. No se afirma haber verificado GPS ni direcciones reales en un dispositivo en esta actualización.

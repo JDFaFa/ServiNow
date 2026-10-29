@@ -42,4 +42,25 @@ class MapSelectionTest {
         assertEquals(selected.latitude, vm.ui.value.draft!!.latitude, 0.000001)
         assertEquals(selected.longitude, vm.ui.value.draft!!.longitude, 0.000001)
     }
+    @Test fun currentGpsLocationUpdatesDraft() {
+        org.junit.Assume.assumeTrue("Requires host GPS injection", androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("gpsFix") == "true")
+        val automation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.executeShellCommand("pm grant com.example.servinow android.permission.ACCESS_FINE_LOCATION").close()
+        automation.executeShellCommand("pm grant com.example.servinow android.permission.ACCESS_COARSE_LOCATION").close()
+        compose.waitUntil(15000) { vm.ready.value }
+        compose.runOnIdle { vm.login("andres@gmail.com", "ServiNow1!") }
+        compose.waitUntil(15000) { vm.ui.value.page == "home" }
+        compose.runOnIdle { vm.startPost(); vm.go("post-location") }
+        compose.waitUntil(15000) { vm.ui.value.page == "post-location" }
+        compose.onNodeWithText("Mi ubicación").performScrollTo().performClick()
+        // Host supplies this position through adb emu geo fix during the request.
+        compose.waitUntil(25000) {
+            kotlin.math.abs(vm.ui.value.draft!!.latitude - 4.65) < 0.0001 &&
+                kotlin.math.abs(vm.ui.value.draft!!.longitude + 74.08) < 0.0001
+        }
+        compose.activityRule.scenario.recreate()
+        assertEquals(4.65, vm.ui.value.draft!!.latitude, 0.0001)
+        assertEquals(-74.08, vm.ui.value.draft!!.longitude, 0.0001)
+    }
+
 }

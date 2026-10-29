@@ -63,6 +63,7 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
           <style>$leafletCss</style><style>html,body{height:100%;width:100%;margin:0}#map{position:absolute;inset:0;background:#edf5ff}.price{background:#1664c0;color:white;border-radius:12px;text-align:center;line-height:32px;font:bold 14px/32px sans-serif}#error{display:none;position:absolute;top:10px;left:50px;right:10px;background:white;padding:10px;z-index:1000;font:14px sans-serif}</style></head>
           <body><div id="map"></div><div id="error">No se pudo cargar el mapa. Revisa tu conexión y vuelve a abrir esta vista.</div><script>$leafletJs</script><script>
           const map=L.map('map').setView([${filters.latitude},${filters.longitude}],13);
+          window.centerMap=(lat,lng)=>map.panTo([lat,lng]);
           const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
           tiles.on('tileerror',()=>document.getElementById('error').style.display='block');
           tiles.on('tileload',()=>document.getElementById('error').style.display='none');
@@ -71,6 +72,7 @@ internal fun ExploreMap(jobs: List<Job>, filters: SearchFilters, modifier: Modif
           </script></body></html>
         """.trimIndent(), "text/html", "UTF-8", null)
     } }, update = { view ->
+        view.evaluateJavascript("window.centerMap && window.centerMap(${filters.latitude},${filters.longitude});", null)
         if (onLocation != null) view.evaluateJavascript("window.setPicked && window.setPicked(${filters.latitude},${filters.longitude});", null)
     }, onRelease = { it.stopLoading(); it.destroy() })
 }

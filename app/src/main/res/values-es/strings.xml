@@ -420,4 +420,8 @@
 <string name="map_my_location">Mi ubicación</string>
 <string name="map_permission_denied">No se permitió acceder a tu ubicación. Puedes elegir el lugar tocando el mapa o activar el permiso en Ajustes.</string>
 <string name="map_address_loading">Buscando la dirección…</string>
+<string name="location_loading">Buscando ubicación…</string>
+<string name="location_disabled">Activa la ubicación del dispositivo y vuelve a intentarlo.</string>
+<string name="location_unavailable">No se pudo obtener tu ubicación. Intenta al aire libre o selecciona un punto en el mapa.</string>
+<string name="location_settings">Abrir ajustes</string>
 </resources>

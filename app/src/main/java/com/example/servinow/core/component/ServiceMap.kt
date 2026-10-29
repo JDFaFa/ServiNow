@@ -52,15 +52,20 @@ fun ServiceMap(
     val pointCallback by rememberUpdatedState(onPoint)
     val postCallback by rememberUpdatedState(onPost)
     if (!token.startsWith("pk.")) {
-        // Preserve the working public map until the team configures Mapbox locally.
+        var currentPoint by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+        LaunchedEffect(latitude, longitude) { currentPoint = latitude to longitude }
         Box(modifier) {
             key(posts.map { it.id }) {
                 ExploreMap(posts.mapIndexed { i, p -> Job(i, p.title, p.category, p.city, p.budget.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), 0, p.interested.size, p.latitude, p.longitude) },
-                    SearchFilters(latitude = latitude, longitude = longitude), Modifier.matchParentSize(),
+                    SearchFilters(latitude = currentPoint?.first ?: latitude, longitude = currentPoint?.second ?: longitude), Modifier.matchParentSize(),
                     { i -> posts.getOrNull(i)?.let(postCallback) },
                     if (interactive) onPoint else null)
             }
             if (!interactive) Box(Modifier.matchParentSize().pointerInput(Unit) {})
+            else CurrentLocationButton(Modifier.align(Alignment.TopEnd).padding(12.dp)) { lat, lng ->
+                currentPoint = lat to lng
+                pointCallback?.invoke(lat, lng)
+            }
         }
         return
     }

@@ -553,7 +553,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                 onPost = { selectedPostId = it.id },
                                 onPoint = { x, y ->
                                     selectedPostId = null
-                                    if (u.page == "location") { lat = x; lng = y }
+                                    lat = x; lng = y
                                 })
                             results.find { it.id == selectedPostId }?.let { selected ->
                                 PostCard(selected, name(selected.author)) { vm.openPost(selected.id) }
