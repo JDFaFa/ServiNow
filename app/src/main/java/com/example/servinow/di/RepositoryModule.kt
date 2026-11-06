@@ -9,6 +9,8 @@ import com.example.servinow.data.repository.*
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+ @Binds @Singleton abstract fun remoteCommunity(impl:com.example.servinow.data.cloud.FirestoreCommunityRepository):RemoteCommunityRepository
+ @Binds @Singleton abstract fun authentication(impl:com.example.servinow.data.cloud.FirebaseAuthenticationRepository):AuthenticationRepository
  @Binds abstract fun geocoding(impl:com.example.servinow.data.repository.remote.MapboxGeocodingRepository):GeocodingRepository
  @Binds @Singleton abstract fun sessions(impl:com.example.servinow.data.repository.local.SessionRepositoryImpl):SessionRepository
  @Binds @Singleton abstract fun community(impl:InMemoryCommunityRepository):CommunityRepository

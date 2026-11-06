@@ -1,6 +1,7 @@
 import java.util.Properties
 
 plugins {
+    id("com.google.gms.google-services")
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
@@ -22,6 +23,7 @@ android {
         applicationId = "com.example.servinow"
         minSdk = 26
         targetSdk = 37
+        resValue("string", "services_base_url", localProperties.getProperty("SERVINOW_SERVICES_URL", ""))
         resValue("string", "mapbox_access_token", localProperties.getProperty("MAPBOX_ACCESS_TOKEN", ""))
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         versionCode = 1
@@ -48,6 +50,13 @@ android {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.mapbox.maps:android-ndk27:11.22.0")
     implementation("com.mapbox.extension:maps-compose-ndk27:11.22.0")
@@ -67,6 +76,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
     androidTestImplementation(platform(libs.androidx.compose.bom))

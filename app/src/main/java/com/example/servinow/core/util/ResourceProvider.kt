@@ -18,6 +18,27 @@ class ResourceProvider @Inject constructor(@ApplicationContext private val conte
 }
 
 fun localizedLabel(resources: android.content.res.Resources, value: String): String = when (value) {
+    "DELETE_CONFIRMATION" -> resources.getString(R.string.delete_confirmation)
+    "RECENT_LOGIN_REQUIRED" -> resources.getString(R.string.delete_recent)
+    "ACTIVE_JOBS" -> resources.getString(R.string.delete_active)
+    "ACCOUNT_CLEANUP_FAILED" -> resources.getString(R.string.delete_failed)
+    "ACCOUNT_DELETED" -> resources.getString(R.string.account_deleted)
+    "NOTICE_OFFER" -> resources.getString(R.string.notice_offer)
+    "NOTICE_MESSAGE" -> resources.getString(R.string.notice_message)
+    "NOTICE_ACCEPTED" -> resources.getString(R.string.notice_accepted)
+    "NOTICE_FINISHED" -> resources.getString(R.string.notice_finished)
+    "CLOUD_OPERATION_FAILED" -> resources.getString(R.string.cloud_operation_failed)
+    "AUTH_CREATED_PROFILE_PENDING" -> resources.getString(R.string.auth_created_profile_pending)
+    "AUTH_CREATED" -> resources.getString(R.string.auth_created)
+    "AUTH_NETWORK" -> resources.getString(R.string.auth_network)
+    "AUTH_THROTTLED" -> resources.getString(R.string.auth_throttled)
+    "AUTH_RECOVERY_FAILED" -> resources.getString(R.string.auth_recovery_failed)
+    "POST_IMAGE_FAILED" -> resources.getString(R.string.post_image_failed)
+    "POST_PERMISSION_FAILED" -> resources.getString(R.string.post_permission_failed)
+    "AUTH_FAILED" -> resources.getString(R.string.auth_failed)
+    "AUTH_RESET_BROWSER" -> resources.getString(R.string.auth_recovery_notice)
+    "AUTH_DELETE_PENDING" -> resources.getString(R.string.auth_delete_pending)
+
     "Crear cuenta" -> resources.getString(R.string.ui_create_account_45a1)
     "Recuperar contraseña" -> resources.getString(R.string.ui_recover_password_bac5)
     "Enlace de recuperación" -> resources.getString(R.string.ui_recovery_link_9b8b)

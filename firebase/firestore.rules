@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signed() { return request.auth != null; }
+  function moderator() { return signed() && (request.auth.token.get('moderator',false) == true || (exists(/databases/$(database)/documents/moderators/$(request.auth.uid)) && get(/databases/$(database)/documents/moderators/$(request.auth.uid)).data.enabled == true)); }
+  function job(id) { return get(/databases/$(database)/documents/posts/$(id)).data; }
+  function participant(p) { return signed() && p.assigned != null && request.auth.uid in [p.author, p.assigned]; }
+  function publicJob(p) { return p.status in ['VERIFIED','IN_PROGRESS','FINISHED']; }
+  function validPost(p) {
+   return p.keys().hasOnly(['author','title','description','category','city','latitude','longitude','budget','imageUri','status','assigned','createdAt','updatedAt','reason'])
+    && p.title is string && p.title.size() >= 5 && p.title.size() <= 120
+    && p.description is string && p.description.size() >= 10 && p.description.size() <= 3000
+    && p.category is string && p.category.size() <= 100 && p.city is string && p.city.size() <= 200
+    && p.latitude is number && p.latitude >= -90 && p.latitude <= 90
+    && p.longitude is number && p.longitude >= -180 && p.longitude <= 180
+    && p.budget is int && p.budget > 0 && p.budget <= 1000000000
+    && (p.imageUri == null || (p.imageUri is string && p.imageUri.size() <= 1000 && p.imageUri.matches('https://res[.]cloudinary[.]com/.*')))
+    && p.updatedAt == request.time;
+  }
+  match /posts/{id} {
+   allow get: if signed() && !exists(/databases/$(database)/documents/posts/$(id));
+   allow read: if publicJob(resource.data) || (signed() && resource.data.author == request.auth.uid) || moderator();
+   allow create: if signed() && validPost(request.resource.data) && request.resource.data.author == request.auth.uid
+    && request.resource.data.status == 'PENDING' && request.resource.data.assigned == null && request.resource.data.createdAt == request.time;
+   allow update: if signed() && validPost(request.resource.data)
+    && request.resource.data.author == resource.data.author && request.resource.data.createdAt == resource.data.createdAt && (
+     (resource.data.author == request.auth.uid && (
+      (request.resource.data.status == 'DELETED' && resource.data.status in ['PENDING','REJECTED','VERIFIED']
+       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+      || (resource.data.status in ['PENDING','REJECTED','VERIFIED'] && request.resource.data.status == 'PENDING'
+       && request.resource.data.assigned == resource.data.assigned)
+      || (resource.data.status == 'VERIFIED' && request.resource.data.status == 'IN_PROGRESS'
+       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned','status','updatedAt'])
+       && exists(/databases/$(database)/documents/offers/$(id + '_' + request.resource.data.assigned)))
+      || (resource.data.status == 'IN_PROGRESS' && request.resource.data.status == 'FINISHED'
+       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+     ))
+     || (moderator() && resource.data.status == 'PENDING' && request.resource.data.status in ['VERIFIED','REJECTED']
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','reason'])
+      && request.resource.data.get('reason','') is string && request.resource.data.get('reason','').size() <= 500)
+    );
+   // Deletion is handled by a trusted backend to clean dependent documents and images.
+   allow delete: if false;
+   match /offers/{worker} {
+    allow read: if signed() && (request.auth.uid == worker || job(id).author == request.auth.uid);
+    allow create: if signed() && worker == request.auth.uid && job(id).author != request.auth.uid && job(id).status == 'VERIFIED'
+     && request.resource.data.keys().hasOnly(['worker','price','description','availability','createdAt'])
+     && request.resource.data.worker == worker && request.resource.data.price is int && request.resource.data.price > 0
+     && request.resource.data.price <= 1000000000 && request.resource.data.description is string
+     && request.resource.data.description.size() >= 5 && request.resource.data.description.size() <= 1000
+     && request.resource.data.availability is string && request.resource.data.availability.size() > 0 && request.resource.data.availability.size() <= 200
+     && request.resource.data.createdAt == request.time;
+    allow update, delete: if false;
+   }
+   match /comments/{comment} {
+    allow read: if publicJob(job(id));
+    allow create: if signed() && publicJob(job(id))
+     && request.resource.data.keys().hasOnly(['author','text','createdAt'])
+     && request.resource.data.author == request.auth.uid && request.resource.data.text is string
+     && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
+     && request.resource.data.createdAt == request.time;
+    allow update, delete: if false;
+   }
+   match /votes/{voter} {
+    allow read: if publicJob(job(id));
+    allow create: if signed() && voter == request.auth.uid && job(id).author != voter && publicJob(job(id))
+     && request.resource.data.keys().hasOnly(['author','createdAt'])
+     && request.resource.data.author == voter && request.resource.data.createdAt == request.time;
+    allow delete: if signed() && voter == request.auth.uid;
+    allow update: if false;
+   }
+   match /messages/{message} {
+    allow read: if participant(job(id));
+    allow create: if participant(job(id)) && request.resource.data.keys().hasOnly(['sender','recipient','text','createdAt'])
+     && request.resource.data.sender == request.auth.uid && request.resource.data.recipient != request.auth.uid
+     && request.resource.data.recipient in [job(id).author,job(id).assigned]
+     && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+     && request.resource.data.createdAt == request.time;
+    allow update, delete: if false;
+   }
+  }
+  match /profiles/{uid} {
+   allow read: if signed();
+   allow create, update: if signed() && request.auth.uid == uid
+    && request.resource.data.keys().hasOnly(['name','city','profession','bio','experience','training','skills','years','photoUri'])
+    && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 100
+    && request.resource.data.city is string && request.resource.data.city.size() <= 200
+    && request.resource.data.profession is string && request.resource.data.profession.size() <= 200
+    && request.resource.data.bio is string && request.resource.data.bio.size() <= 3000
+    && request.resource.data.experience is string && request.resource.data.experience.size() <= 3000
+    && request.resource.data.training is string && request.resource.data.training.size() <= 3000
+    && request.resource.data.skills is string && request.resource.data.skills.size() <= 1000
+    && request.resource.data.years is int && request.resource.data.years >= 0 && request.resource.data.years <= 80
+    && (request.resource.data.photoUri == null || (request.resource.data.photoUri is string && request.resource.data.photoUri.size() <= 1000 && request.resource.data.photoUri.matches('https://res[.]cloudinary[.]com/.*')));
+   allow delete: if false;
+  }
+  match /offers/{offer} {
+   allow get: if signed() && !exists(/databases/$(database)/documents/offers/$(offer));
+   allow read: if signed() && (resource.data.worker == request.auth.uid || resource.data.author == request.auth.uid);
+   allow create: if signed() && request.resource.data.keys().hasOnly(['post','author','worker','price','description','availability','createdAt'])
+    && request.resource.data.post is string && request.resource.data.worker == request.auth.uid
+    && offer == request.resource.data.post + '_' + request.auth.uid
+    && job(request.resource.data.post).status == 'VERIFIED' && job(request.resource.data.post).author != request.auth.uid
+    && request.resource.data.author == job(request.resource.data.post).author
+    && request.resource.data.price is int && request.resource.data.price > 0 && request.resource.data.price <= 1000000000
+    && request.resource.data.description is string && request.resource.data.description.size() >= 5 && request.resource.data.description.size() <= 1000
+    && request.resource.data.availability is string && request.resource.data.availability.size() > 0 && request.resource.data.availability.size() <= 200
+    && request.resource.data.createdAt == request.time;
+   allow update, delete: if false;
+  }
+  match /reviews/{id} {
+   allow read: if signed();
+   allow create: if signed() && request.resource.data.keys().hasOnly(['post','author','worker','stars','text','createdAt'])
+    && request.resource.data.post == id && job(id).author == request.auth.uid && job(id).status == 'FINISHED'
+    && request.resource.data.author == request.auth.uid && request.resource.data.worker == job(id).assigned
+    && request.resource.data.stars is int && request.resource.data.stars >= 1 && request.resource.data.stars <= 5
+    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
+    && request.resource.data.createdAt == request.time;
+   allow update, delete: if false;
+  }
+  match /members/{uid} {
+   allow read: if signed() && request.auth.uid == uid;
+   allow create, update: if signed() && request.auth.uid == uid
+    && request.resource.data.keys().hasOnly(['phone','latitude','longitude'])
+    && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
+    && request.resource.data.latitude is number && request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90
+    && request.resource.data.longitude is number && request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180;
+   allow delete: if false;
+   match /rewards/{reward} { allow read: if signed() && request.auth.uid == uid; allow write: if false; }
+   match /devices/{device} {
+    allow read, delete: if signed() && request.auth.uid == uid;
+    allow create, update: if signed() && request.auth.uid == uid
+     && request.resource.data.keys().hasOnly(['token','updatedAt'])
+     && request.resource.data.token is string && request.resource.data.token.size() > 0 && request.resource.data.token.size() <= 4096
+     && request.resource.data.updatedAt == request.time;
+   }
+   match /notices/{notice} {
+    allow read: if signed() && request.auth.uid == uid;
+    allow update: if signed() && request.auth.uid == uid
+     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) && request.resource.data.read is bool;
+    allow create, delete: if false;
+   }
+  }
+  match /{document=**} { allow read, write: if false; }
+ }
+}

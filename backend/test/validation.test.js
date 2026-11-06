@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {descriptionInput,imageType,boundedBody} from '../src/validation.js';
+import worker from '../src/worker.js';
+test('valid draft',()=>assert.equal(descriptionInput({text:'Necesito reparar la puerta.',language:'es'}).language,'es'));
+test('reject contact details and oversized prompt',()=>{for(const text of ['Llámame al 310 123 4567','Contactar a usuario@gmail.com','a'.repeat(3001),''])assert.throws(()=>descriptionInput({text,language:'es'}));});
+test('reject unknown language',()=>assert.throws(()=>descriptionInput({text:'Repair a kitchen door',language:'de'})));
+test('reject SVG and oversized images',()=>{assert.throws(()=>imageType(new TextEncoder().encode('<svg/>')));assert.throws(()=>imageType(new Uint8Array(5*1024*1024+1)));assert.equal(imageType(new Uint8Array([255,216,255,0])),'image/jpeg');});
+test('stream limit does not trust headers',async()=>{await assert.rejects(boundedBody(new Request('https://example.com',{method:'POST',body:'123456'}),5));});
+test('private endpoints reject missing auth',async()=>{for(const path of ['/v1/images','/v1/description'])assert.equal((await worker.fetch(new Request(`https://example.com${path}`,{method:'POST',body:'{}'}),{})).status,401);});
+test('invalid JWT rejected',async()=>assert.equal((await worker.fetch(new Request('https://example.com/v1/description',{method:'POST',headers:{authorization:'Bearer fake'},body:'{}'}),{FIREBASE_PROJECT_ID:'servinow-4efcf'})).status,401));

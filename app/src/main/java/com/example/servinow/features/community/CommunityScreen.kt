@@ -65,11 +65,15 @@ private fun Card(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun Action(s: String, click: () -> Unit) {
+private fun Action(s: String, click: () -> Unit) = Action(s, true, click)
+
+@Composable
+private fun Action(s: String, enabled: Boolean, click: () -> Unit) {
     Button(
         click,
         Modifier.fillMaxWidth().heightIn(min = 50.dp),
         shape = RoundedCornerShape(16.dp),
+        enabled = enabled,
     ) {
         Text(s)
     }
@@ -164,6 +168,7 @@ private fun title(page: String): String {
         "delete-post" -> resources.getString(R.string.ui_delete_post_fd4a)
         "offers" -> resources.getString(R.string.ui_received_offers_2032)
         "confirm-offer" -> resources.getString(R.string.ui_confirm_worker_ba80)
+        "chat" -> resources.getString(R.string.private_chat)
         "tracking" -> resources.getString(R.string.ui_job_progress_aebc)
         "finish",
         "mod-finish" -> resources.getString(R.string.ui_finish_job_49b9)
@@ -193,7 +198,8 @@ private fun title(page: String): String {
 
 @Composable
 fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
-    val resources = androidx.compose.ui.platform.LocalContext.current.resources
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val resources = context.resources
     val ready by vm.ready.collectAsStateWithLifecycle()
     val preferences by vm.preferences.collectAsStateWithLifecycle()
     if (!ready) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }; return }
@@ -204,6 +210,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
     LaunchedEffect(currentPage) { vm.destinationChanged(currentPage) }
     val s by vm.state.collectAsStateWithLifecycle()
     val u by vm.ui.collectAsStateWithLifecycle()
+    val remoteError by vm.remoteError.collectAsStateWithLifecycle()
     val me = s.me
     val post = s.posts.find { it.id == u.postId }
     var query by rememberSaveable { mutableStateOf("") }
@@ -333,6 +340,11 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                 Modifier.fillMaxSize().verticalScroll(scroll).padding(screenSpacing()),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
+                if(remoteError!=null) Text(resources.getString(R.string.cloud_load_failed),color=MaterialTheme.colorScheme.error)
+                if (u.authBusy || u.operationBusy) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Text(resources.getString(R.string.auth_working))
+                }
                 key(u.page) {
                     when (u.page) {
                         "welcome" -> WelcomeScreen(onStart = { vm.go("onboarding") }, onLogin = { vm.go("login") })
@@ -340,7 +352,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                         "login",
                         "mod-login" -> {
                             var email by rememberSaveable { mutableStateOf("") }
-                            var password by rememberSaveable { mutableStateOf("") }
+                            var password by remember { mutableStateOf("") }
                             Text(
                                 resources.getString(R.string.ui_good_to_see_you_a305),
                                 color = MaterialTheme.colorScheme.primary,
@@ -356,21 +368,17 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             TextButton(onClick = { vm.go("recovery") }) {
                                 Text(resources.getString(R.string.ui_forgot_my_password_5cf8))
                             }
-                            Action(resources.getString(R.string.ui_sign_in_ef16)) {
+                            Action(resources.getString(R.string.ui_sign_in_ef16), enabled = !u.authBusy) {
                                 vm.login(email, password, u.page == "mod-login")
                             }
                             if (u.page == "login") {
-                                Action(resources.getString(R.string.ui_continue_with_google_f56b)) {
-                                    vm.message(
-                                        resources.getString(R.string.ui_google_sign_in_is_not_connected_use_an_account_created_in_this_ap_7b6c)
-                                    )
-                                }
+                                com.example.servinow.features.cloud.GoogleSignInButton(!u.authBusy,vm::googleToken) { vm.message("AUTH_FAILED") }
                                 Link(resources.getString(R.string.ui_new_here_create_an_account_fa98)) { vm.go("register") }
                                 TextButton(onClick = { vm.go("mod-login") }) {
                                     Text(resources.getString(R.string.ui_i_am_a_moderator_0675))
                                 }
                             }
-                            Card {
+                            if (!vm.usesRemoteAuthentication) Card {
                                 Text(resources.getString(R.string.ui_demo_access_eddb), fontWeight = FontWeight.Bold)
                                 Text(
                                     if (u.page == "mod-login") "moderador@gmail.com\nModerador1!"
@@ -385,15 +393,15 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                         "register" -> {
                             var n by rememberSaveable { mutableStateOf("") }
                             var e by rememberSaveable { mutableStateOf("") }
-                            var p by rememberSaveable { mutableStateOf("") }
-                            var c by rememberSaveable { mutableStateOf("") }
+                            var p by remember { mutableStateOf("") }
+                            var c by remember { mutableStateOf("") }
                             Title(resources.getString(R.string.ui_create_your_account_a9de))
                             Text(resources.getString(R.string.ui_request_help_and_offer_your_services_from_the_same_account_6bca))
                             Field(resources.getString(R.string.ui_full_name_8229), n, { n = it })
                             Field(resources.getString(R.string.ui_email_00ff), e, { e = it })
                             Field(resources.getString(R.string.ui_password_6129), p, { p = it }, password = true)
                             Field(resources.getString(R.string.ui_confirm_password_02bf), c, { c = it }, password = true)
-                            Action(resources.getString(R.string.ui_create_account_45a1)) { vm.register(n, e, p, c) }
+                            Action(resources.getString(R.string.ui_create_account_45a1), enabled = !u.authBusy) { vm.register(n, e, p, c) }
                             Text(
                                 resources.getString(R.string.ui_you_can_complete_your_address_from_my_account_e341),
                                 style = MaterialTheme.typography.bodySmall,
@@ -410,8 +418,8 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             Title(resources.getString(R.string.ui_recover_your_access_47db))
                             Text(resources.getString(R.string.ui_enter_your_account_email_2b4e))
                             Field(resources.getString(R.string.ui_email_00ff), e, { e = it })
-                            Action(resources.getString(R.string.ui_request_link_933e)) { vm.recovery(e) }
-                            Text(resources.getString(R.string.ui_demo_recovery_no_real_email_will_be_sent_3b40))
+                            Action(resources.getString(R.string.ui_request_link_933e), enabled = !u.authBusy) { vm.recovery(e) }
+                            Text(resources.getString(if (vm.usesRemoteAuthentication) R.string.auth_recovery_notice else R.string.ui_demo_recovery_no_real_email_will_be_sent_3b40))
                         }
                         "sent" -> {
                             Icon(
@@ -424,7 +432,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             Text(
                                 resources.getString(R.string.recovery_email_notice, u.recoveryEmail)
                             )
-                            Card {
+                            if (!vm.usesRemoteAuthentication) Card {
                                 Text(resources.getString(R.string.ui_demo_link_7942), fontWeight = FontWeight.Bold)
                                 Text(
                                     resources.getString(R.string.ui_open_the_demo_link_in_the_app_to_try_recovery_without_an_email_se_22b3)
@@ -435,8 +443,8 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             Link(resources.getString(R.string.ui_back_to_sign_in_b64a)) { vm.go("login") }
                         }
                         "new-password" -> {
-                            var p by rememberSaveable { mutableStateOf("") }
-                            var c by rememberSaveable { mutableStateOf("") }
+                            var p by remember { mutableStateOf("") }
+                            var c by remember { mutableStateOf("") }
                             Text(
                                 resources.getString(R.string.ui_account_recovery_07f0),
                                 color = MaterialTheme.colorScheme.primary,
@@ -606,7 +614,23 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     if (post.author != me?.id && post.status == PostStatus.VERIFIED)
                                         Action(resources.getString(R.string.ui_send_an_offer_cf68)) { vm.go("offer") }
                                 }
+                                if (post.status in listOf(PostStatus.VERIFIED, PostStatus.IN_PROGRESS, PostStatus.FINISHED)) {
+                                    Link(resources.getString(R.string.share_job)) {
+                                        val text = resources.getString(R.string.share_job_body, post.title,
+                                            localizedLabel(resources, post.category), post.city, money(post.budget), post.description)
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(android.content.Intent.EXTRA_SUBJECT, post.title)
+                                            putExtra(android.content.Intent.EXTRA_TEXT, text)
+                                        }
+                                        try { context.startActivity(android.content.Intent.createChooser(intent, resources.getString(R.string.share_job))) }
+                                        catch (_: android.content.ActivityNotFoundException) { vm.message(resources.getString(R.string.share_unavailable)) }
+                                    }
+                                }
                                 if (post.author == me?.id) {
+                                    if (post.status != PostStatus.FINISHED) {
+                                        Action(resources.getString(R.string.ui_mark_as_finished_788c)) { vm.go("finish") }
+                                    }
                                     Link(resources.getString(R.string.offer_count, s.offers.count { it.post == post.id })) {
                                         vm.go("offers")
                                     }
@@ -633,7 +657,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     }
                                 var text by rememberSaveable { mutableStateOf("") }
                                 Field(resources.getString(R.string.ui_add_comment_0e7c), text, { text = it }, true)
-                                Action(resources.getString(R.string.ui_post_comment_5824)) { if (vm.comment(text)) text = "" }
+                                Action(resources.getString(R.string.ui_post_comment_5824)) { vm.comment(text) { text = "" } }
                             }
                         }
                         "create",
@@ -697,6 +721,9 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                             },
                                         )
                                         PhotoPicker(d.imageUri) { uri -> vm.draft(d.copy(imageUri = uri, hasImage = uri != null)) }
+                                        com.example.servinow.features.cloud.CloudTools(d.description, d.imageUri,
+                                            { vm.draft(d.copy(description = it)) },
+                                            { vm.draft(d.copy(imageUri = it, hasImage = true)) })
                                         Action(resources.getString(R.string.ui_continue_8bec)) {
                                             if (
                                                 d.description.trim().length < 10 ||
@@ -718,10 +745,11 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         Choice(
                                             resources.getString(R.string.ui_city_dcbc),
                                             d.city,
-                                            listOf("Bogotá", "Medellín", "Cali"),
+                                            listOf("Armenia", "Bogotá", "Medellín", "Cali"),
                                         ) { c ->
                                             val point =
                                                 when (c) {
+                                                    "Armenia" -> 4.535 to -75.675
                                                     "Medellín" -> 6.244 to -75.581
                                                     "Cali" -> 3.451 to -76.532
                                                     else -> 4.6486 to -74.0628
@@ -754,7 +782,8 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         Text(
                                             resources.getString(R.string.ui_the_post_will_be_pending_and_will_appear_in_the_feed_after_approv_10e8)
                                         )
-                                        Action(resources.getString(R.string.ui_submit_for_review_b370), vm::savePost)
+                                        Text(resources.getString(R.string.post_upload_notice))
+                                        Action(resources.getString(R.string.ui_submit_for_review_b370), enabled = !u.operationBusy) { vm.savePost() }
                                     }
                                 }
                         }
@@ -833,6 +862,27 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             Action(resources.getString(R.string.ui_confirm_worker_ba80), vm::accept)
                             Link(resources.getString(R.string.ui_keep_comparing_4ae8)) { vm.go("offers") }
                         }
+                        "chat" -> {
+                            val allowed = post?.assigned != null && me?.id in setOf(post?.author, post?.assigned)
+                            if (!allowed) Text(resources.getString(R.string.chat_unavailable))
+                            else {
+                                Title(resources.getString(R.string.private_chat))
+                                Text(post?.title.orEmpty())
+                                Text(resources.getString(R.string.chat_private_hint))
+                                val messages = s.messages.filter { it.post == post?.id && me?.id in setOf(it.sender, it.recipient) }
+                                if (messages.isEmpty()) Text(resources.getString(R.string.chat_empty))
+                                messages.forEach { item ->
+                                    Card {
+                                        Text(if (item.sender == me?.id) resources.getString(R.string.chat_you) else name(item.sender), fontWeight = FontWeight.Bold)
+                                        Text(item.text)
+                                        Text(java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(item.createdAt)), style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                                var text by rememberSaveable(u.postId, me?.id) { mutableStateOf("") }
+                                Field(resources.getString(R.string.chat_message), text, { if (it.length <= 2000) text = it }, true)
+                                Button(onClick = { vm.sendMessage(text) { text = "" } }, enabled = text.isNotBlank() && !u.operationBusy, modifier = Modifier.fillMaxWidth()) { Text(resources.getString(R.string.chat_send)) }
+                            }
+                        }
                         "tracking" -> {
                             Title(resources.getString(R.string.ui_your_job_is_in_good_hands_e694))
                             Text(post?.title.orEmpty())
@@ -873,6 +923,9 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     post.assigned != null && s.reviews.none { it.post == post.id }
                                 )
                                     Action(resources.getString(R.string.ui_rate_experience_45bd)) { vm.go("review") }
+                            }
+                            if (post?.assigned != null && me?.id in setOf(post?.author, post?.assigned)) {
+                                Action(resources.getString(R.string.private_chat)) { vm.go("chat") }
                             }
                             Link(resources.getString(R.string.ui_view_conversation_d351)) { vm.go("comments") }
                         }
@@ -1007,6 +1060,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             }
                         }
                         "account" -> {
+                            com.example.servinow.features.cloud.NotificationPermission()
                             val accountPoints = s.points[me?.id] ?: 0
                             val initials = me?.name.orEmpty().trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.take(2).joinToString("") { it.take(1).uppercase() }
                             Surface(
@@ -1100,6 +1154,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     )
                                 } else {
                                     PhotoPicker(m.photoUri, circular = true) { m = m.copy(photoUri = it) }
+                                    com.example.servinow.features.cloud.CloudTools("", m.photoUri, {}, { m = m.copy(photoUri = it) }, showAi = false)
                                     Field(resources.getString(R.string.ui_full_name_8229), m.name, { m = m.copy(name = it) })
                                     Field(resources.getString(R.string.ui_email_00ff), m.email, { m = m.copy(email = it) })
                                     Field(
@@ -1107,7 +1162,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         m.phone,
                                         { m = m.copy(phone = it) },
                                     )
-                                    Choice(resources.getString(R.string.ui_city_dcbc), m.city, listOf("Bogotá", "Medellín", "Cali")) {
+                                    Choice(resources.getString(R.string.ui_city_dcbc), m.city, listOf("Armenia", "Bogotá", "Medellín", "Cali")) {
                                         m = m.copy(city = it)
                                     }
                                     ServiceMap(m.latitude, m.longitude, Modifier.fillMaxWidth().height(280.dp), selectedPoint = Point.fromLngLat(m.longitude, m.latitude), onPoint = { x, y -> m = m.copy(latitude = x, longitude = y) })
@@ -1255,7 +1310,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             }
                             Text(resources.getString(R.string.ui_your_badges_2746), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             val firstCount = s.posts.count { it.author == me?.id }
-                            val commentCount = s.comments.count { it.author == me?.id }
+                            val commentCount = if(vm.usesRemoteAuthentication) s.rewards.count { it.startsWith("${me?.id}:comment:") } else s.comments.count { it.author == me?.id }
                             val verifiedCount = s.rewards.count { it.startsWith("${me?.id}:verify:") }
                             listOf(
                                 Triple("first", resources.getString(R.string.ui_your_first_post_6935), Triple(firstCount, 1, resources.getString(R.string.ui_post_a_job_to_get_started_cdf6))),

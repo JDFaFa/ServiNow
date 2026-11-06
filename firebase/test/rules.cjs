@@ -1,0 +1,41 @@
+const {createRequire}=require('node:module');
+const req=createRequire(process.env.FIREBASE_TEST_MODULES+'/package.json');
+const {initializeTestEnvironment,assertSucceeds,assertFails}=req('@firebase/rules-unit-testing');
+const {doc,setDoc,getDoc,updateDoc,serverTimestamp,collection,getDocs,query,where}=req('firebase/firestore');
+const fs=require('node:fs');
+(async()=>{
+ const env=await initializeTestEnvironment({projectId:'demo-servinow',firestore:{rules:fs.readFileSync('firebase/firestore.rules','utf8')}});
+ const owner=env.authenticatedContext('owner').firestore(), worker=env.authenticatedContext('worker').firestore(), other=env.authenticatedContext('other').firestore(), mod=env.authenticatedContext('moderator',{moderator:true}).firestore(), anon=env.unauthenticatedContext().firestore();
+ const profile={name:'Persona de prueba',city:'Armenia',profession:'',bio:'',experience:'',training:'',skills:'',years:0,photoUri:null};
+ try {
+ await assertSucceeds(setDoc(doc(owner,'profiles/owner'),profile));
+ await assertFails(setDoc(doc(other,'profiles/owner'),profile));
+ await assertFails(updateDoc(doc(owner,'profiles/owner'),{role:'MODERATOR'}));
+ await assertFails(getDoc(doc(anon,'profiles/owner')));
+ const job={author:'owner',title:'Reparar una llave',description:'La llave de la cocina está goteando.',category:'Plomería',city:'Armenia',latitude:4.53,longitude:-75.67,budget:100000,imageUri:null,status:'PENDING',assigned:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+ await assertSucceeds(getDoc(doc(owner,'posts/job')));
+ await assertSucceeds(setDoc(doc(owner,'posts/job'),job));
+ await assertFails(getDoc(doc(other,'posts/job')));
+ await assertFails(updateDoc(doc(owner,'posts/job'),{status:'VERIFIED',updatedAt:serverTimestamp()}));
+ await assertSucceeds(updateDoc(doc(mod,'posts/job'),{status:'VERIFIED',updatedAt:serverTimestamp()}));
+ await assertSucceeds(getDocs(query(collection(other,'posts'),where('status','in',['VERIFIED','IN_PROGRESS','FINISHED']))));
+ const offer={post:'job',author:'owner',worker:'worker',price:90000,description:'Puedo reparar la llave',availability:'Mañana',createdAt:serverTimestamp()};
+ await assertSucceeds(setDoc(doc(worker,'offers/job_worker'),offer));
+ await assertFails(getDoc(doc(other,'offers/job_worker')));
+ await assertSucceeds(updateDoc(doc(owner,'posts/job'),{status:'IN_PROGRESS',assigned:'worker',updatedAt:serverTimestamp()}));
+ const message={sender:'owner',recipient:'worker',text:'Hola, podemos coordinar',createdAt:serverTimestamp()};
+ await assertSucceeds(setDoc(doc(owner,'posts/job/messages/one'),message));
+ await assertSucceeds(getDoc(doc(worker,'posts/job/messages/one')));
+ await assertFails(getDoc(doc(other,'posts/job/messages/one')));
+ await assertFails(setDoc(doc(worker,'posts/job/messages/spoof'),message));
+ await assertFails(updateDoc(doc(worker,'posts/job'),{status:'FINISHED',updatedAt:serverTimestamp()}));
+ await assertSucceeds(updateDoc(doc(owner,'posts/job'),{status:'FINISHED',updatedAt:serverTimestamp()}));
+ await assertSucceeds(setDoc(doc(owner,'reviews/job'),{post:'job',author:'owner',worker:'worker',stars:5,text:'Buen trabajo',createdAt:serverTimestamp()}));
+ await assertFails(setDoc(doc(owner,'reviews/job'),{post:'job',author:'owner',worker:'worker',stars:1,text:'Duplicada',createdAt:serverTimestamp()}));
+ await env.withSecurityRulesDisabled(async ctx=>setDoc(doc(ctx.firestore(),'members/owner/rewards/create_job'),{key:'create:job',amount:10}));
+ await assertSucceeds(getDocs(collection(owner,'members/owner/rewards')));
+ await assertFails(getDocs(collection(other,'members/owner/rewards')));
+ await assertFails(setDoc(doc(owner,'members/owner/rewards/fake'),{key:'create:fake',amount:999}));
+ console.log('PASS: 24 Firestore permission and lifecycle assertions');
+ } finally {await env.cleanup();}
+})().catch(e=>{console.error(e);process.exitCode=1});

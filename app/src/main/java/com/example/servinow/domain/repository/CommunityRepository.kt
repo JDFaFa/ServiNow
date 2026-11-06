@@ -13,6 +13,8 @@ interface CommunityRepository {
 
     fun restoreSession(session: UserSession): Boolean
 
+    fun setAuthenticatedMember(member: Member)
+
     fun logout()
 
     fun register(name: String, email: String, password: String, confirmation: String): String?
@@ -46,6 +48,8 @@ interface CommunityRepository {
     fun deleteAccount(confirmation: String): String?
 
     fun markNotice(id: String, read: Boolean)
+
+    fun sendMessage(postId: String, text: String): String?
 
     fun markAllNotices()
 }

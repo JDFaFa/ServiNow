@@ -76,6 +76,21 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
             }
     }
 
+    override fun sendMessage(postId: String, text: String): String? {
+        val actor = state.value.currentUser ?: return "Inicia sesión para continuar."
+        val post = state.value.posts.find { it.id == postId } ?: return "Publicación no disponible."
+        val worker = post.assigned ?: return "El chat estará disponible al asignar un trabajador."
+        if (actor !in setOf(post.author, worker)) return "No tienes acceso a esta conversación."
+        val content = text.trim()
+        if (content.length !in 1..2000) return "Escribe un mensaje de 1 a 2000 caracteres."
+        val recipient = if (actor == post.author) worker else post.author
+        if (recipient == actor) return "No puedes enviarte mensajes."
+        val message = PrivateMessage(id(), postId, actor, recipient, content)
+        _state.value = state.value.copy(messages = state.value.messages + message)
+        notice(recipient, "Nuevo mensaje", "Tienes un mensaje sobre: ${post.title}", postId)
+        return null
+    }
+
     override fun login(email: String, password: String, moderator: Boolean): String? {
         EmailValidator.error(email)?.let {
             return it
@@ -95,6 +110,10 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
         val user = state.value.users.find { it.id == session.userId && it.role == session.role } ?: return false
         _state.value = state.value.copy(currentUser = user.id)
         return true
+    }
+
+    override fun setAuthenticatedMember(member: Member) {
+        _state.value = state.value.copy(users = state.value.users.filterNot { it.id == member.id } + member, currentUser = member.id)
     }
 
     override fun logout() {

@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "455300518770",
+    "project_id": "servinow-4efcf",
+    "storage_bucket": "servinow-4efcf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455300518770:android:351d7c9061e215df7c43eb",
+        "android_client_info": {
+          "package_name": "com.example.servinow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "455300518770-nvurqbpsbtk6mhmg3hro2rnh8b489ncd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxdxl4aq3tPjTlVvQzijT9ojtxbreUQHQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

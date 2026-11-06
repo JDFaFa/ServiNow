@@ -19,7 +19,7 @@ object Routes {
     val tabs = setOf("home", "mine", "account", "notifications", "moderation")
     val all = setOf(
         "welcome", "onboarding", "login", "mod-login", "register", "recovery", "sent", "new-password",
-        "home", "empty", "filters", "map", "location", "detail", "comments",
+        "home", "empty", "filters", "map", "location", "detail", "comments", "chat",
         "create", "create-details", "post-location", "preview", "submitted", "mine",
         "delete-post", "offers", "confirm-offer", "tracking", "finish", "review",
         "offer", "my-offers", "worker", "profile", "cv", "professional",

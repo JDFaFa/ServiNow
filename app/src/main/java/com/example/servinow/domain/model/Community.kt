@@ -79,6 +79,15 @@ data class MemberNotice(
     val read: Boolean = false,
 )
 
+data class PrivateMessage(
+    val id: String,
+    val post: String,
+    val sender: String,
+    val recipient: String,
+    val text: String,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
 data class CommunityState(
     val users: List<Member> = emptyList(),
     val posts: List<WorkPost> = emptyList(),
@@ -89,6 +98,7 @@ data class CommunityState(
     val points: Map<String, Int> = emptyMap(),
     val rewards: Set<String> = emptySet(),
     val currentUser: String? = null,
+    val messages: List<PrivateMessage> = emptyList(),
 ) {
     val me: Member?
         get() = users.find { it.id == currentUser }

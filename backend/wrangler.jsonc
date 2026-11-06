@@ -1,0 +1,20 @@
+{
+  "name": "servinow-services",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-30",
+  "vars": {
+    "FIREBASE_PROJECT_ID": "servinow-4efcf",
+    "FIREBASE_WEB_API_KEY": "AIzaSyBxdxl4aq3tPjTlVvQzijT9ojtxbreUQHQ",
+    "MODERATOR_EMAIL": "juand.sazaa@uqvirtual.edu.co"
+  },
+  "ratelimits": [
+    {
+      "name": "REQUEST_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ]
+}
