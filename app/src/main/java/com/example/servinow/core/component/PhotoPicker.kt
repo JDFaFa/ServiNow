@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import coil3.compose.AsyncImage
+import com.example.servinow.core.component.ServicePhoto
 import com.example.servinow.R
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +82,7 @@ fun PhotoPicker(uri: String?, circular: Boolean = false, onSelected: (String?) -
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (uri != null) AsyncImage(model = uri, contentDescription = stringResource(R.string.photo_preview), contentScale = ContentScale.Crop,
+        if (uri != null) ServicePhoto(model = uri, contentDescription = stringResource(R.string.photo_preview), contentScale = ContentScale.Crop,
             modifier = if (circular) Modifier.size(112.dp).clip(CircleShape) else Modifier.fillMaxWidth().height(180.dp))
         OutlinedButton(onClick = { sheet = true }, enabled = !busy) { Text(stringResource(R.string.photo_select)) }
         if (uri != null) TextButton(onClick = { onSelected(null) }) { Text(stringResource(R.string.photo_remove)) }

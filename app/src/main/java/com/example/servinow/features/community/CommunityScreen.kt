@@ -10,7 +10,7 @@ import com.example.servinow.navigation.NavigationEffects
 import com.example.servinow.navigation.ServiNowNavHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.servinow.core.component.PhotoPicker
-import coil3.compose.AsyncImage
+import com.example.servinow.core.component.ServicePhoto
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.BorderStroke
@@ -197,7 +197,7 @@ private fun title(page: String): String {
 }
 
 @Composable
-fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
+fun CommunityRoute(vm: CommunityViewModel = hiltViewModel(), notification: MemberNotice? = null, onNotificationHandled: () -> Unit = {}) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val resources = context.resources
     val ready by vm.ready.collectAsStateWithLifecycle()
@@ -212,6 +212,12 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
     val u by vm.ui.collectAsStateWithLifecycle()
     val remoteError by vm.remoteError.collectAsStateWithLifecycle()
     val me = s.me
+    LaunchedEffect(notification,me?.id) {
+        if(notification!=null && me!=null) {
+            if(notification.recipient==me.id)vm.openNotice(notification)
+            onNotificationHandled()
+        }
+    }
     val post = s.posts.find { it.id == u.postId }
     var query by rememberSaveable(me?.id) { mutableStateOf("") }
     var category by rememberSaveable(me?.id) { mutableStateOf("Todas") }
@@ -317,7 +323,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         null,
                                         Modifier.size(22.dp),
                                     )
-                                    Text(label, style = MaterialTheme.typography.labelSmall)
+                                    Text(if(page=="notifications" && s.notices.any { !it.read }) "$label (${s.notices.count { !it.read }})" else label, style = MaterialTheme.typography.labelSmall)
                                 }
                             }
                         }
@@ -589,7 +595,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     "${localizedLabel(resources, post.category)} · ${localizedLabel(resources, post.status.label)}",
                                     color = MaterialTheme.colorScheme.primary,
                                 )
-                                if (post.imageUri != null) AsyncImage(model = post.imageUri, contentDescription = null, modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Crop) else if (post.hasImage) ExampleImage()
+                                if (post.imageUri != null) ServicePhoto(model = post.imageUri, contentDescription = null, modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Crop) else if (post.hasImage) ExampleImage()
                                 Text(post.description)
                                 Text("${post.city} · ${money(post.budget)}")
                                 ServiceMap(post.latitude, post.longitude, Modifier.fillMaxWidth().height(160.dp), posts = listOf(post), interactive = false)
@@ -650,6 +656,10 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     )
                                         Link(resources.getString(R.string.ui_edit_post_53bd)) { vm.editPost(post) }
                                     Link(resources.getString(R.string.ui_delete_post_fd4a)) { vm.go("delete-post") }
+                                }
+                                if (post.assigned != null && me?.id in setOf(post.author,post.assigned)) {
+                                    Action(resources.getString(R.string.private_chat)) { vm.go("chat") }
+                                    if (post.author != me?.id) Link(resources.getString(R.string.ui_job_progress_aebc)) { vm.go("tracking") }
                                 }
                                 Title(resources.getString(R.string.ui_comments_043e))
                                 s.comments
@@ -780,7 +790,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                             color = MaterialTheme.colorScheme.primary,
                                         )
                                         Title(d.title)
-                                        if (d.imageUri != null) AsyncImage(model = d.imageUri, contentDescription = resources.getString(R.string.photo_preview), modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Crop) else if (d.hasImage) ExampleImage()
+                                        if (d.imageUri != null) ServicePhoto(model = d.imageUri, contentDescription = resources.getString(R.string.photo_preview), modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Crop) else if (d.hasImage) ExampleImage()
                                         Text("${localizedLabel(resources, d.category)} · ${d.city}")
                                         Text(d.description)
                                         Text(money(d.budget))
@@ -1020,6 +1030,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         else resources.getString(R.string.ui_pending_37f6)
                                     )
                                     Action(resources.getString(R.string.ui_view_job_2479)) { vm.openPost(o.post) }
+                                    if (p?.assigned == me?.id) Action(resources.getString(R.string.private_chat)) { vm.openPost(o.post,"chat") }
                                 }
                             }
                         }
@@ -1027,7 +1038,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                         "cv" -> {
                             val person = s.users.find { it.id == u.profileId }
                             if (person != null) {
-                                if (person.photoUri != null) AsyncImage(model = person.photoUri, contentDescription = null, modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape), contentScale = ContentScale.Crop)
+                                if (person.photoUri != null) ServicePhoto(model = person.photoUri, contentDescription = null, modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape), contentScale = ContentScale.Crop)
                                 Title(person.name)
                                 Text(person.profession.ifBlank { resources.getString(R.string.ui_community_professional_1ab1) })
                                 val reviews = s.reviews.filter { it.worker == person.id }
@@ -1088,7 +1099,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         color = MaterialTheme.colorScheme.primaryContainer,
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
-                                            if (me?.photoUri != null) AsyncImage(model = me.photoUri, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                                            if (me?.photoUri != null) ServicePhoto(model = me.photoUri, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                                             else Text(initials, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                                         }
                                     }
@@ -1194,6 +1205,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                         }
                         "notifications" -> {
                             val notices = s.notices.filter { it.recipient == me?.id }
+                            com.example.servinow.features.cloud.NotificationPermission()
                             Title(resources.getString(R.string.ui_your_notifications_b48b))
                             Text(resources.getString(R.string.unread_count, notices.count { !it.read }))
                             Link(resources.getString(R.string.ui_mark_all_as_read_0483), vm::markAll)
@@ -1210,11 +1222,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         Text(if (n.read) resources.getString(R.string.ui_mark_unread_be17) else resources.getString(R.string.ui_mark_read_2e82))
                                     }
                                     Action(resources.getString(R.string.ui_view_details_3aa8)) {
-                                        vm.mark(n.id, true)
-                                        if (n.post == null) vm.go("achievements")
-                                        else if (s.posts.none { it.id == n.post })
-                                            vm.message(resources.getString(R.string.ui_the_post_was_deleted_2057))
-                                        else vm.openPost(n.post)
+                                        vm.openNotice(n)
                                     }
                                 }
                             }
@@ -1384,7 +1392,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             if (post != null) {
                                 Title(post.title)
                                 Text("${localizedLabel(resources, post.status.label)} · ${name(post.author)}")
-                                if (post.imageUri != null) AsyncImage(model = post.imageUri, contentDescription = resources.getString(R.string.photo_preview), modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Crop) else if (post.hasImage) ExampleImage()
+                                if (post.imageUri != null) ServicePhoto(model = post.imageUri, contentDescription = resources.getString(R.string.photo_preview), modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Crop) else if (post.hasImage) ExampleImage()
                                 Text(post.description)
                                 Text("${localizedLabel(resources, post.category)} · ${post.city} · ${money(post.budget)}")
                                 if (post.status == PostStatus.PENDING) {
@@ -1425,6 +1433,9 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
 private fun PostCard(p: WorkPost, author: String, open: () -> Unit) {
     val resources = androidx.compose.ui.platform.LocalContext.current.resources
     Card {
+        p.imageUri?.let { photo ->
+            ServicePhoto(photo, resources.getString(R.string.photo_preview), Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(16.dp)))
+        }
         Text(
             "${localizedLabel(resources, p.category)} · ${localizedLabel(resources, p.status.label)}",
             color = MaterialTheme.colorScheme.primary,

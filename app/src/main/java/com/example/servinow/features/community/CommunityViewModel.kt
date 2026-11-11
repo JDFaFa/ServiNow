@@ -341,6 +341,18 @@ class CommunityViewModel @Inject constructor(private val repository: CommunityRe
     fun sendMessage(text:String,onSent:()->Unit = {}) = operation(completed=onSent) {
         if(remote!=null) { remote.sendMessage(ui.value.postId,text); null } else repository.sendMessage(ui.value.postId,text)
     }
+    fun openNotice(notice:MemberNotice) {
+        if(notice.recipient!=state.value.me?.id)return
+        mark(notice.id,true)
+        val post=notice.post
+        if(post==null)go("achievements")
+        else openPost(post,when(notice.body) {
+            "NOTICE_MESSAGE" -> "chat"
+            "NOTICE_OFFER" -> "offers"
+            "NOTICE_ACCEPTED", "NOTICE_FINISHED" -> "tracking"
+            else -> "detail"
+        })
+    }
     fun mark(id:String,read:Boolean) = operation {
         if(remote!=null) remote.markNotice(id,read) else repository.markNotice(id,read)
         null

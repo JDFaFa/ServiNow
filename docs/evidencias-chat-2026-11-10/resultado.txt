@@ -1,0 +1,8 @@
+
+com.example.servinow.LiveAcceptedChatTest:.
+
+Time: 22.816
+
+OK (1 test)
+
+

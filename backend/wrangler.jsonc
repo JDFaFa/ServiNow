@@ -8,6 +8,7 @@
     "MODERATOR_EMAIL": "juand.sazaa@uqvirtual.edu.co"
   },
   "ratelimits": [
+    {"name":"EVENT_LIMITER","namespace_id":"1002","simple":{"limit":120,"period":60}},
     {
       "name": "REQUEST_LIMITER",
       "namespace_id": "1001",

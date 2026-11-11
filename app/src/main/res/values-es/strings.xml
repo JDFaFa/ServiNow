@@ -489,4 +489,12 @@
     <string name="cloud_processing">Procesando… Tu texto se conservará hasta que aceptes la sugerencia.</string>
     <string name="ai_rate_limit">Has realizado varias solicitudes seguidas. Espera un minuto y vuelve a intentarlo. Tu texto se conserva.</string>
     <string name="ai_timeout">La IA tardó demasiado en responder. Inténtalo de nuevo; tu texto se conserva.</string>
+    <string name="photo_load_failed">No se pudo cargar la foto.</string>
+    <string name="push_channel">Mensajes y trabajos</string>
+    <string name="push_enabled">Notificaciones activas · Configurar</string>
+    <string name="push_settings">Abrir ajustes de notificaciones</string>
+    <string name="push_permission_hint">Activa las notificaciones en Ajustes para recibir sonido y avisos del celular. Tus avisos siguen disponibles aquí.</string>
+    <string name="notice_approved">Tu publicación fue aprobada y ya puede recibir propuestas.</string>
+    <string name="notice_rejected">Tu publicación necesita cambios. Abre el aviso para ver el motivo.</string>
+    <string name="notice_comment">Hay un nuevo comentario en tu publicación.</string>
 </resources>

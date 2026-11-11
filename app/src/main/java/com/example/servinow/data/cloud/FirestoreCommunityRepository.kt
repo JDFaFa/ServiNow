@@ -24,6 +24,8 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
     private val offerGroups = mutableMapOf<String,List<WorkOffer>>()
     private var generation = 0
     private var selected: String? = null
+    private var selectedListener: ListenerRegistration? = null
+    private var selectedAccess: Pair<PostStatus, String?>? = null
     private fun post(id: String) = db.collection("posts").document(id)
     private fun Query.watch(bucket: MutableList<ListenerRegistration> = listeners, update: (QuerySnapshot) -> Unit) {
         val epoch = generation
@@ -83,25 +85,47 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
             mutable.update { it.copy(points=mapOf(member.id to q.documents.sumOf { d -> (d.getLong("amount")?:0).toInt() }),rewards=keys) }
         }
         db.collection("reviews").limit(100).watch { q -> mutable.update { it.copy(reviews=q.documents.map { d->WorkerReview(d.id,d.getString("post").orEmpty(),d.getString("worker").orEmpty(),d.getString("author").orEmpty(),(d.getLong("stars")?:0).toInt(),d.getString("text").orEmpty()) }) } }
-        db.collection("members").document(member.id).collection("notices").limit(100).watch { q -> mutable.update { it.copy(notices=q.documents.map { d->MemberNotice(d.id,member.id,d.getString("title").orEmpty(),d.getString("body").orEmpty(),d.getString("post"),d.getBoolean("read")?:false) }) } }
+        db.collection("members").document(member.id).collection("notices").orderBy("createdAt",Query.Direction.DESCENDING).limit(100).watch { q -> mutable.update { it.copy(notices=q.documents.map { d->MemberNotice(d.id,member.id,d.getString("title").orEmpty(),d.getString("body").orEmpty(),d.getString("post"),d.getBoolean("read")?:false) }) } }
     }
     override fun disconnect() {
         generation++; listeners.forEach { it.remove() }; listeners.clear()
         detailListeners.forEach { it.remove() }; detailListeners.clear()
+        selectedListener?.remove(); selectedListener=null; selectedAccess=null
         postGroups.clear(); offerGroups.clear(); selected=null
         mutable.value=CommunityState(); failures.value=null
     }
     override fun observePost(id: String) {
-        selected=id; detailListeners.forEach { it.remove() };detailListeners.clear()
+        selectedListener?.remove()
+        selected=id; selectedAccess=null
+        detailListeners.forEach { it.remove() }; detailListeners.clear()
         mutable.update { it.copy(comments=emptyList(),messages=emptyList()) }
-        val p=state.value.posts.find { it.id==id }
-        if(p?.status in setOf(PostStatus.VERIFIED,PostStatus.IN_PROGRESS,PostStatus.FINISHED)) post(id).collection("comments").orderBy("createdAt",Query.Direction.DESCENDING).limit(100).watch(detailListeners) { q ->
+        val epoch=generation
+        // Listen to the job itself: acceptance can arrive after this screen opens.
+        selectedListener=post(id).addSnapshotListener { document,error ->
+            if(epoch!=generation || selected!=id) return@addSnapshotListener
+            if(error!=null) { failures.value="CLOUD_LOAD_FAILED"; return@addSnapshotListener }
+            val p=document?.let(::decodePost) ?: return@addSnapshotListener
+            mutable.update { state ->
+                val previous=state.posts.find { it.id==id }
+                state.copy(posts=state.posts.filterNot { it.id==id }+p.copy(interested=previous?.interested.orEmpty()))
+            }
+            val access=p.status to p.assigned
+            if(selectedAccess!=access) {
+                selectedAccess=access
+                detailListeners.forEach { it.remove() }; detailListeners.clear()
+                mutable.update { it.copy(comments=emptyList(),messages=emptyList()) }
+                observePostContent(id,p)
+            }
+        }
+    }
+    private fun observePostContent(id:String,p:WorkPost) {
+        if(p.status in setOf(PostStatus.VERIFIED,PostStatus.IN_PROGRESS,PostStatus.FINISHED)) post(id).collection("comments").orderBy("createdAt",Query.Direction.DESCENDING).limit(100).watch(detailListeners) { q ->
             if(selected==id) mutable.update { it.copy(comments=q.documents.map { d->WorkComment(d.id,id,d.getString("author").orEmpty(),d.getString("text").orEmpty()) }.reversed()) }
         }
-        if(p?.status in setOf(PostStatus.VERIFIED,PostStatus.IN_PROGRESS,PostStatus.FINISHED)) post(id).collection("votes").limit(1000).watch(detailListeners) { q ->
+        if(p.status in setOf(PostStatus.VERIFIED,PostStatus.IN_PROGRESS,PostStatus.FINISHED)) post(id).collection("votes").limit(1000).watch(detailListeners) { q ->
             if(selected==id) mutable.update { s -> s.copy(posts=s.posts.map { if(it.id==id) it.copy(interested=q.documents.map { d->d.id }.toSet()) else it }) }
         }
-        if(p?.assigned!=null && actor in setOf(p.author,p.assigned)) {
+        if(p.assigned!=null && actor in setOf(p.author,p.assigned)) {
             post(id).collection("messages").orderBy("createdAt",Query.Direction.DESCENDING).limit(100).watch(detailListeners) { q ->
                 if(selected==id) mutable.update { it.copy(messages=q.documents.map { d->PrivateMessage(d.id,id,d.getString("sender").orEmpty(),d.getString("recipient").orEmpty(),d.getString("text").orEmpty(),d.getTimestamp("createdAt")?.toDate()?.time?:0) }.reversed()) }
             }
@@ -126,10 +150,11 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
     override suspend fun finish(id: String) { jobs.finish(id); announce("finished",id,id) }
     override suspend fun sendMessage(id: String,text:String) { val event=jobs.send(id,text); announce("message",id,event) }
     override suspend fun deletePost(id:String) { post(id).update(mapOf("status" to "DELETED","updatedAt" to FieldValue.serverTimestamp())).waitResult() }
-    override suspend fun verify(id:String) { post(id).update(mapOf("status" to "VERIFIED","updatedAt" to FieldValue.serverTimestamp())).waitResult(); reward("verify",id,id) }
+    override suspend fun verify(id:String) { post(id).update(mapOf("status" to "VERIFIED","updatedAt" to FieldValue.serverTimestamp())).waitResult(); reward("verify",id,id); announce("approved",id,id) }
     override suspend fun reject(id:String,reason:String) {
         require(reason.trim().length in 5..500)
         post(id).update(mapOf("status" to "REJECTED","reason" to reason.trim(),"updatedAt" to FieldValue.serverTimestamp())).waitResult()
+        announce("rejected",id,id)
     }
     override suspend fun vote(id:String) {
         val ref=post(id).collection("votes").document(actor)
@@ -139,6 +164,7 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
         require(text.trim().length in 1..1000)
         val comment=post(id).collection("comments").add(mapOf("author" to actor,"text" to text.trim(),"createdAt" to FieldValue.serverTimestamp())).waitResult()
         reward("comment",id,comment.id)
+        announce("comment",id,comment.id)
     }
     override suspend fun offer(id:String,price:String,text:String,availability:String) {
         val amount=price.toLongOrNull();require(amount!=null&&amount>0&&text.trim().length in 5..1000&&availability.trim().length in 1..200)
@@ -160,7 +186,7 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
             tx.update(ref,mapOf("assigned" to o.getString("worker"),"status" to "IN_PROGRESS","updatedAt" to FieldValue.serverTimestamp()))
         }.waitResult()
         announce("accepted",acceptedPost,acceptedPost)
-        selected=null
+        // Keep the selected job listener alive while acceptance propagates.
     }
     override suspend fun review(id:String,stars:Int,text:String) {
         require(stars in 1..5 && text.trim().length in 1..1000)
@@ -173,8 +199,9 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
     override suspend fun updateMember(member:Member) {
         check(member.id==actor);require(member.name.trim().length in 2..100)
         require(member.email==FirebaseAuth.getInstance().currentUser?.email) { "El cambio de correo requiere verificación." }
-        require(member.photoUri==null||member.photoUri.startsWith("https://res.cloudinary.com/")) { "Sube primero la foto a la nube." }
-        db.batch().set(db.collection("profiles").document(actor),profileData(member))
+        val uri = member.photoUri
+        val uploaded = if (uri != null && !uri.startsWith("https://res.cloudinary.com/")) gateway.upload(uri) else uri
+        db.batch().set(db.collection("profiles").document(actor),profileData(member.copy(photoUri = uploaded)))
             .set(db.collection("members").document(actor),mapOf("phone" to member.phone,"latitude" to member.latitude,"longitude" to member.longitude)).commit().waitResult()
     }
     override suspend fun markNotice(id:String,read:Boolean) { db.collection("members").document(actor).collection("notices").document(id).update("read",read).waitResult() }

@@ -20,3 +20,15 @@ test('Offer must belong to job and actor; reject path traversal',()=>{
  assert.throws(()=>notificationTarget('worker',i,post,doc({worker:'worker',author:'client',post:'other'})));
  assert.throws(()=>notificationTarget('worker',{...i,post:'../secret'},post,{}));
 });
+test('only a moderator can announce a persisted moderation decision',()=>{
+ const input={type:'approved',post:'job',event:'job'},approved=doc({author:'client',status:'VERIFIED'});
+ assert.equal(notificationTarget('mod',input,approved,null,true),'client');
+ assert.throws(()=>notificationTarget('worker',input,approved,null,false));
+ assert.throws(()=>notificationTarget('mod',input,post,null,true));
+});
+test('comment author may notify the job owner, but self-comments stay silent',()=>{
+ const input={type:'comment',post:'job',event:'comment'};
+ assert.equal(notificationTarget('worker',input,post,doc({author:'worker'})),'client');
+ assert.equal(notificationTarget('client',input,post,doc({author:'client'})),null);
+ assert.throws(()=>notificationTarget('outsider',input,post,doc({author:'worker'})));
+});

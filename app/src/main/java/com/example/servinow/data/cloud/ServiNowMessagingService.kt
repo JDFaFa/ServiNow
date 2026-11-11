@@ -24,12 +24,29 @@ class ServiNowMessagingService : FirebaseMessagingService() {
         if(message.data["recipient"]!=uid) return
         if(android.os.Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(this,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)return
         val manager=getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel("jobs",getString(R.string.app_name),NotificationManager.IMPORTANCE_DEFAULT))
-        val intent=Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pending=PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        manager.notify(message.data["post"].orEmpty().hashCode(),NotificationCompat.Builder(this,"jobs")
+        val channel="job_updates"
+        manager.createNotificationChannel(NotificationChannel(channel,getString(R.string.push_channel),NotificationManager.IMPORTANCE_HIGH))
+        val notice=message.data["notice"] ?: message.data["post"].orEmpty()
+        val body=message.data["body"].orEmpty()
+        val content=getString(when(body) {
+            "NOTICE_MESSAGE" -> R.string.notice_message
+            "NOTICE_OFFER" -> R.string.notice_offer
+            "NOTICE_ACCEPTED" -> R.string.notice_accepted
+            "NOTICE_FINISHED" -> R.string.notice_finished
+            "NOTICE_APPROVED" -> R.string.notice_approved
+            "NOTICE_REJECTED" -> R.string.notice_rejected
+            "NOTICE_COMMENT" -> R.string.notice_comment
+            else -> R.string.push_update
+        })
+        val intent=Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .putExtra("notice_id",notice).putExtra("notice_post",message.data["post"])
+            .putExtra("notice_body",body).putExtra("notice_recipient",uid)
+        val pending=PendingIntent.getActivity(this,notice.hashCode(),intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        manager.notify(notice.hashCode(),NotificationCompat.Builder(this,channel)
             .setSmallIcon(R.drawable.ic_notification).setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.push_update)).setContentIntent(pending).setAutoCancel(true).build())
+            .setContentText(content).setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setPriority(NotificationCompat.PRIORITY_HIGH).setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setOnlyAlertOnce(true).setContentIntent(pending).setAutoCancel(true).build())
     }
     companion object {
         fun registerToken(token:String) {

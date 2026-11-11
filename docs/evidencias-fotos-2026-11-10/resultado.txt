@@ -1,0 +1,8 @@
+
+com.example.servinow.LivePhotoPersistenceTest:.
+
+Time: 12.316
+
+OK (1 test)
+
+

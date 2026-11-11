@@ -1,7 +1,7 @@
 
 com.example.servinow.LiveAiFlowTest:.
 
-Time: 7.177
+Time: 11.19
 
 OK (1 test)
 

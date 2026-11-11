@@ -21,8 +21,9 @@ export default{async fetch(request,env){try{
  if(path==='/health'&&request.method==='GET')return json({service:'ServiNow',status:'ok'});
  if(request.method!=='POST'||!['/v1/description','/v1/images','/v1/notify','/v1/account-delete','/v1/activity','/v1/bootstrap'].includes(path))throw new ApiError(404,'NOT_FOUND');
  const claims=await identity(request,env,true),uid=claims.sub;
- if(!env.REQUEST_LIMITER)throw new ApiError(503,'SERVICE_NOT_CONFIGURED');
- if(!(await env.REQUEST_LIMITER.limit({key:uid})).success)throw new ApiError(429,'TRY_LATER');
+ const limiter=['/v1/description','/v1/images'].includes(path)?env.REQUEST_LIMITER:env.EVENT_LIMITER;
+ if(!limiter)throw new ApiError(503,'SERVICE_NOT_CONFIGURED');
+ if(!(await limiter.limit({key:uid})).success)throw new ApiError(429,'TRY_LATER');
  if(path==='/v1/bootstrap')return json(await bootstrap(env,claims));
  if(path==='/v1/activity'){let input;try{input=JSON.parse(new TextDecoder().decode(await boundedBody(request,4096)));}catch{throw new ApiError(400,'INVALID_JSON');}return json(await recordReward(env,uid,input));}
  if(path==='/v1/account-delete'){let input;try{input=JSON.parse(new TextDecoder().decode(await boundedBody(request,1024)));}catch{throw new ApiError(400,'INVALID_JSON');}return json(await deleteAccount(env,claims,request.headers.get('authorization').slice(7),input?.confirmation));}
