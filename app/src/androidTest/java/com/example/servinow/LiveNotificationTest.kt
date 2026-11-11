@@ -27,7 +27,7 @@ class LiveNotificationTest {
     private fun act(block:CommunityViewModel.()->Unit)=compose.runOnIdle { vm.block() }
     private fun <T> await(task:com.google.android.gms.tasks.Task<T>):T=Tasks.await(task,40,TimeUnit.SECONDS)
     private fun notifyAs(user:com.google.firebase.auth.FirebaseUser,type:String,post:String,event:String):JSONObject {
-        val connection=URL(compose.activity.getString(R.string.services_base_url)+"/v1/notify").openConnection() as HttpURLConnection
+        val connection=URL(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.services_base_url)+"/v1/notify").openConnection() as HttpURLConnection
         try {
             connection.requestMethod="POST";connection.doOutput=true;connection.readTimeout=30000
             connection.setRequestProperty("Authorization","Bearer "+await(user.getIdToken(false)).token)
@@ -68,14 +68,22 @@ class LiveNotificationTest {
             await(db.collection("posts").document(id).update(mapOf("status" to "IN_PROGRESS","assigned" to worker.uid,"updatedAt" to FieldValue.serverTimestamp())))
             val message="message_$tag"
             await(wdb.collection("posts").document(id).collection("messages").document(message).set(mapOf("sender" to worker.uid,"recipient" to client.uid,"text" to "[PRUEBA] Te escribo para coordinar el trabajo.","createdAt" to FieldValue.serverTimestamp())))
+            manager.cancelAll()
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressHome()
             val delivered=notifyAs(worker,"message",id,message)
             Assert.assertTrue("FCM background: $delivered",delivered.optBoolean("push"))
             val noticeId="message_$message"
-            compose.waitUntil(45_000) { manager.activeNotifications.any { it.id==noticeId.hashCode() } }
+            val deadline=System.currentTimeMillis()+45_000
+            while(manager.activeNotifications.none { it.id==noticeId.hashCode() } && System.currentTimeMillis()<deadline)Thread.sleep(200)
             val notification=manager.activeNotifications.first { it.id==noticeId.hashCode() }.notification
-            Assert.assertEquals(compose.activity.getString(R.string.notice_message),notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
-            notification.contentIntent.send()
+            Assert.assertEquals(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.notice_message),notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+            val device=UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+            device.openNotification()
+            device.waitForIdle();Thread.sleep(700)
+            val notice=device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.notice_message))),10_000)
+            Assert.assertNotNull("Visible message notification",notice)
+            notice.click()
+
             compose.waitUntil(30_000) { vm.ui.value.page=="chat"&&vm.ui.value.postId==id }
             compose.waitUntil(30_000) { vm.state.value.messages.any { it.text.contains("coordinar") } }
             compose.waitUntil(20_000) { vm.state.value.notices.any { it.id==noticeId&&it.read } }

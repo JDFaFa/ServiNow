@@ -27,5 +27,5 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent { ServiNowTheme { CommunityRoute(notification=pendingNotice.value,onNotificationHandled={pendingNotice.value=null}) } }
     }
-    override fun onNewIntent(intent:Intent) { super.onNewIntent(intent);setIntent(intent);readNotice(intent) }
+    override fun onNewIntent(intent:Intent) { super.onNewIntent(intent);readNotice(intent) }
 }

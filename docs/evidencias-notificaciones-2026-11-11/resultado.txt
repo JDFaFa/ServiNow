@@ -1,0 +1,8 @@
+
+com.example.servinow.LiveNotificationTest:.
+
+Time: 16.476
+
+OK (1 test)
+
+

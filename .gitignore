@@ -21,3 +21,8 @@ local.properties
 firestore-debug.log
 firebase-debug.log
 ui-debug.log
+
+# Private release signing material
+*.jks
+*.keystore
+keystore.properties
