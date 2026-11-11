@@ -109,7 +109,7 @@
     <string name="ui_step_1_of_4_98a2">Step 1 of 4</string>
     <string name="ui_what_service_do_you_need_24bf">What service do you need?</string>
     <string name="ui_job_title_d0ff">Job title</string>
-    <string name="ui_enter_a_title_with_at_least_4_characters_7744">Enter a title with at least 4 characters.</string>
+    <string name="ui_enter_a_title_with_at_least_4_characters_7744">Enter a title with at least 5 characters.</string>
     <string name="ui_step_2_of_4_2312">Step 2 of 4</string>
     <string name="ui_tell_us_the_details_b702">Tell us the details.</string>
     <string name="ui_description_7059">Description</string>
@@ -334,7 +334,7 @@
     <string name="ui_this_account_does_not_have_moderator_permissions_caa9">This account does not have moderator permissions.</string>
     <string name="ui_enter_a_name_between_2_and_100_characters_c17d">Enter a name between 2 and 100 characters.</string>
     <string name="ui_passwords_do_not_match_2005">Passwords do not match.</string>
-    <string name="ui_an_account_with_this_email_already_exists_1cf5">An account with this email already exists.</string>
+    <string name="ui_an_account_with_this_email_already_exists_1cf5">An account with this email already exists. Sign in or reset your password. If you used Google, choose Continue with Google.</string>
     <string name="ui_request_a_recovery_link_first_51e3">Request a recovery link first.</string>
     <string name="ui_this_account_does_not_exist_in_the_demo_b193">This account does not exist in the demo.</string>
     <string name="ui_sign_in_with_an_account_0d7a">Sign in with an account.</string>
@@ -481,4 +481,13 @@
 <string name="post_upload_notice">Submitting uploads the selected photo to the cloud with your post.</string>
 <string name="post_image_failed">Could not upload the photo. Select a JPG, PNG or WebP image up to 5 MB and try again. Your draft is preserved.</string>
 <string name="post_permission_failed">You do not have permission to save this change. Check that you are signed in as its author. Your draft is preserved.</string>
+    <string name="pending_posts_visibility">You have %1$d post(s) awaiting approval. Other accounts can see them once a moderator approves them.</string>
+    <string name="sent_proposals_link">View my sent proposals</string>
+    <string name="received_proposals_hint">Your jobs are listed here. Open received proposals below each post. Only you can see the proposals sent to you.</string>
+    <string name="received_proposals_count">View received proposals (%1$d)</string>
+    <string name="auth_invalid_credentials">The email or password is incorrect. Check both. If you do not have an account yet, sign up; if you used Google, choose Continue with Google.</string>
+    <string name="ai_input_hint">Describe what you need. For example: “The kitchen tap is leaking”.</string>
+    <string name="cloud_processing">Processing… Your text stays unchanged until you accept the suggestion.</string>
+    <string name="ai_rate_limit">You have made several requests in a row. Wait a minute and try again. Your text is unchanged.</string>
+    <string name="ai_timeout">The AI took too long to respond. Try again; your text is unchanged.</string>
 </resources>

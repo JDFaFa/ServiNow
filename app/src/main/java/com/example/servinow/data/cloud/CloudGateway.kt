@@ -59,7 +59,7 @@ class CloudGateway @Inject constructor(@ApplicationContext private val context: 
         return withContext(Dispatchers.IO) {
             val connection = URL("$root/v1/$path").openConnection() as HttpURLConnection
             try {
-                connection.requestMethod = "POST"; connection.connectTimeout = 15000; connection.readTimeout = 30000
+                connection.requestMethod = "POST"; connection.connectTimeout = 15000; connection.readTimeout = if (path == "description") 45000 else 30000
                 connection.instanceFollowRedirects = false; connection.doOutput = true
                 connection.setRequestProperty("Authorization", "Bearer $token")
                 connection.setRequestProperty("Content-Type", type)

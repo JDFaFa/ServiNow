@@ -1,0 +1,8 @@
+
+com.example.servinow.LiveAiFlowTest:.
+
+Time: 7.177
+
+OK (1 test)
+
+

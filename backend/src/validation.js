@@ -3,7 +3,7 @@ export function descriptionInput(body){
  if(!body || typeof body.text!=='string' || body.text.trim().length<10 || body.text.length>3000) throw new ApiError(400,'INVALID_DESCRIPTION');
  if(!['es','en'].includes(body.language)) throw new ApiError(400,'INVALID_LANGUAGE');
  if(/[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:\+?\d[\s().-]*){9,}/i.test(body.text)) throw new ApiError(400,'REMOVE_CONTACT_DETAILS');
- if((body.text.match(/\p{L}+/gu)||[]).length<3)throw new ApiError(400,'AI_NEEDS_DETAILS');
+ if((body.text.match(/\p{L}+/gu)||[]).length<2)throw new ApiError(400,'AI_NEEDS_DETAILS');
  return {text:body.text.trim(),language:body.language};
 }
 export function imageType(bytes){
@@ -23,7 +23,13 @@ export async function boundedBody(request,max){
 
 // Never expose a model explanation as a replacement for a job description.
 export function descriptionOutput(output){
- let value;try{value=JSON.parse(output);}catch{throw new ApiError(502,'AI_INVALID_RESPONSE');}
+ let value;try{
+  if(typeof output!=='string')throw new Error();
+  // Some providers wrap otherwise valid JSON in a Markdown code fence.
+  // Accept only an entire fenced object, never arbitrary surrounding prose.
+  const source=output.trim().replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i,'$1');
+  value=JSON.parse(source);
+ }catch{throw new ApiError(502,'AI_INVALID_RESPONSE');}
  if(value?.status==='needs_details')throw new ApiError(422,'AI_NEEDS_DETAILS');
  if(value?.status!=='ok'||typeof value.description!=='string'||value.description.trim().length<10||value.description.length>3000)throw new ApiError(502,'AI_INVALID_RESPONSE');
  const text=value.description.trim();

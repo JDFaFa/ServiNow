@@ -213,14 +213,14 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
     val remoteError by vm.remoteError.collectAsStateWithLifecycle()
     val me = s.me
     val post = s.posts.find { it.id == u.postId }
-    var query by rememberSaveable { mutableStateOf("") }
-    var category by rememberSaveable { mutableStateOf("Todas") }
-    var city by rememberSaveable { mutableStateOf("Todas") }
-    var order by rememberSaveable { mutableStateOf("Recientes") }
-    var onlyOpen by rememberSaveable { mutableStateOf(true) }
-    var lat by rememberSaveable { mutableStateOf(4.6486) }
-    var lng by rememberSaveable { mutableStateOf(-74.0628) }
-    var nearby by rememberSaveable { mutableStateOf(false) }
+    var query by rememberSaveable(me?.id) { mutableStateOf("") }
+    var category by rememberSaveable(me?.id) { mutableStateOf("Todas") }
+    var city by rememberSaveable(me?.id) { mutableStateOf("Todas") }
+    var order by rememberSaveable(me?.id) { mutableStateOf("Recientes") }
+    var onlyOpen by rememberSaveable(me?.id) { mutableStateOf(true) }
+    var lat by rememberSaveable(me?.id) { mutableStateOf(4.535) }
+    var lng by rememberSaveable(me?.id) { mutableStateOf(-75.675) }
+    var nearby by rememberSaveable(me?.id) { mutableStateOf(false) }
     fun name(id: String?) = s.users.find { it.id == id }?.name ?: resources.getString(R.string.ui_deleted_user_f4f7)
     fun publicPosts() =
         s.posts.filter {
@@ -501,6 +501,11 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     Text("→", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
                                 }
                             }
+                            val pendingCount = s.posts.count { it.author == me?.id && it.status == PostStatus.PENDING }
+                            if (pendingCount > 0) Card {
+                                Text(resources.getString(R.string.pending_posts_visibility, pendingCount))
+                                Link(resources.getString(R.string.ui_view_my_posts_3cdc)) { vm.go("mine") }
+                            }
                             Text(resources.getString(R.string.ui_explore_jobs_7c3d), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             Field(resources.getString(R.string.ui_search_for_a_job_23b2), query, { query = it })
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -526,7 +531,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                         "filters" -> {
                             Title(resources.getString(R.string.ui_find_what_you_need_72e9))
                             Choice(resources.getString(R.string.ui_category_028c), category, categories) { category = it }
-                            Choice(resources.getString(R.string.ui_city_dcbc), city, listOf("Todas", "Bogotá", "Medellín", "Cali")) {
+                            Choice(resources.getString(R.string.ui_city_dcbc), city, listOf("Todas", "Armenia", "Bogotá", "Medellín", "Cali")) {
                                 city = it
                             }
                             Choice(resources.getString(R.string.ui_order_3538), order, listOf("Recientes", "Más relevantes")) {
@@ -628,7 +633,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     }
                                 }
                                 if (post.author == me?.id) {
-                                    if (post.status != PostStatus.FINISHED) {
+                                    if (post.status == PostStatus.IN_PROGRESS) {
                                         Action(resources.getString(R.string.ui_mark_as_finished_788c)) { vm.go("finish") }
                                     }
                                     Link(resources.getString(R.string.offer_count, s.offers.count { it.post == post.id })) {
@@ -688,7 +693,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                             { vm.draft(d.copy(title = it)) },
                                         )
                                         Action(resources.getString(R.string.ui_continue_8bec)) {
-                                            if (d.title.trim().length < 4)
+                                            if (d.title.trim().length < 5)
                                                 vm.message(
                                                     resources.getString(R.string.ui_enter_a_title_with_at_least_4_characters_7744)
                                                 )
@@ -801,6 +806,8 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                         }
                         "mine" -> {
                             Title(resources.getString(R.string.ui_my_requests_e46d))
+                            Link(resources.getString(R.string.sent_proposals_link)) { vm.go("my-offers") }
+                            Text(resources.getString(R.string.received_proposals_hint))
                             Action(resources.getString(R.string.ui_new_request_a95a), vm::startPost)
                             var filter by rememberSaveable { mutableStateOf("Todas") }
                             Choice(
@@ -816,7 +823,12 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                         (filter == "Todas" || it.status.label == filter)
                                 }
                             if (list.isEmpty()) Text(resources.getString(R.string.ui_you_have_no_posts_with_this_status_c66f))
-                            list.forEach { p -> PostCard(p, name(p.author)) { vm.openPost(p.id) } }
+                            list.forEach { p ->
+                                PostCard(p, name(p.author)) { vm.openPost(p.id) }
+                                Link(resources.getString(R.string.received_proposals_count, s.offers.count { it.post == p.id })) {
+                                    vm.openPost(p.id, "offers")
+                                }
+                            }
                         }
                         "delete-post" -> {
                             Title(resources.getString(R.string.ui_delete_this_post_e996))
@@ -917,10 +929,10 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     }
                                 }
                             if (post != null && post.author == me?.id) {
-                                if (post.status != PostStatus.FINISHED)
+                                if (post.status == PostStatus.IN_PROGRESS)
                                     Action(resources.getString(R.string.ui_mark_as_finished_788c)) { vm.go("finish") }
                                 else if (
-                                    post.assigned != null && s.reviews.none { it.post == post.id }
+                                    post.status == PostStatus.FINISHED && post.assigned != null && s.reviews.none { it.post == post.id }
                                 )
                                     Action(resources.getString(R.string.ui_rate_experience_45bd)) { vm.go("review") }
                             }
@@ -936,7 +948,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             Text(
                                 resources.getString(R.string.ui_confirm_that_the_job_is_complete_the_author_and_worker_will_be_no_a944)
                             )
-                            Action(resources.getString(R.string.ui_confirm_completion_4467), vm::finish)
+                            Action(resources.getString(R.string.ui_confirm_completion_4467), enabled = post?.author == me?.id && post?.status == PostStatus.IN_PROGRESS && !u.operationBusy) { vm.finish() }
                             Link(resources.getString(R.string.ui_back_a785), vm::back)
                         }
                         "review" -> {
@@ -1353,7 +1365,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                             Text(
                                 resources.getString(R.string.moderation_counts, s.posts.count { it.status == PostStatus.PENDING }, s.posts.count { it.status == PostStatus.VERIFIED })
                             )
-                            var filter by rememberSaveable { mutableStateOf(resources.getString(R.string.ui_pending_37f6)) }
+                            var filter by rememberSaveable { mutableStateOf(PostStatus.PENDING.label) }
                             Choice(
                                 resources.getString(R.string.ui_status_843e),
                                 filter,
@@ -1379,7 +1391,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel()) {
                                     Action(resources.getString(R.string.ui_approve_post_c4cc), vm::verify)
                                     Link(resources.getString(R.string.ui_reject_with_reason_cd8f)) { vm.go("reject") }
                                 }
-                                if (post.status != PostStatus.FINISHED)
+                                if (post.author == me?.id && post.status == PostStatus.IN_PROGRESS)
                                     Link(resources.getString(R.string.ui_mark_as_finished_ed23)) { vm.go("mod-finish") }
                             }
                         }

@@ -1,0 +1,242 @@
+[
+  {
+    "test": "A1 ingreso admin y bootstrap",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "Perfil cliente",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 rol normal cliente",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "Perfil trabajador",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 rol normal trabajador",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 crear pendiente qa_20261110_1794336664",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 crear pendiente qa_20261110_1794336664_reject",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 recompensa creaci\u00f3n",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 usuario no puede autoaprobar",
+    "pass": true,
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "test": "U1 tercero no ve pendiente",
+    "pass": true,
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "test": "A1 lista pendientes",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "A2 aprobar publicaci\u00f3n",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "A2 recompensa verificaci\u00f3n",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "A2 publicaci\u00f3n visible",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "A3 rechazar con motivo",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "A3 autor puede ver rechazo",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 corregir y reenviar",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U1 retirar publicaci\u00f3n prueba",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 comentar",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 votar",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 enviar oferta",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aviso oferta",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aviso guardado cliente",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aceptar oferta",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aviso aceptaci\u00f3n",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 chat cliente",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aviso chat cliente",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 chat trabajador",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aviso chat trabajador",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "A3 admin no ve chat privado",
+    "pass": true,
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "test": "U2 trabajador no finaliza ajeno",
+    "pass": true,
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "test": "U2 autor finaliza",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 aviso finalizaci\u00f3n",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 rese\u00f1a",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U2 persistencia estado final",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U3 IA texto inv\u00e1lido",
+    "pass": true,
+    "status": 400,
+    "expected": 400
+  },
+  {
+    "test": "U3 IA descripci\u00f3n real",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U3 subir fotograf\u00eda",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U3 leer fotograf\u00eda nube",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "test": "U3 guardar fotograf\u00eda perfil",
+    "pass": true,
+    "status": 200,
+    "expected": 200
+  }
+]

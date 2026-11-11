@@ -108,7 +108,7 @@
     <string name="ui_step_1_of_4_98a2">Paso 1 de 4</string>
     <string name="ui_what_service_do_you_need_24bf">¿Qué servicio necesitas?</string>
     <string name="ui_job_title_d0ff">Título del trabajo</string>
-    <string name="ui_enter_a_title_with_at_least_4_characters_7744">Escribe un título de al menos 4 caracteres.</string>
+    <string name="ui_enter_a_title_with_at_least_4_characters_7744">Escribe un título de al menos 5 caracteres.</string>
     <string name="ui_step_2_of_4_2312">Paso 2 de 4</string>
     <string name="ui_tell_us_the_details_b702">Cuéntanos los detalles.</string>
     <string name="ui_description_7059">Descripción</string>
@@ -333,7 +333,7 @@
     <string name="ui_this_account_does_not_have_moderator_permissions_caa9">Esta cuenta no tiene permisos de moderador.</string>
     <string name="ui_enter_a_name_between_2_and_100_characters_c17d">Escribe un nombre de 2 a 100 caracteres.</string>
     <string name="ui_passwords_do_not_match_2005">Las contraseñas no coinciden.</string>
-    <string name="ui_an_account_with_this_email_already_exists_1cf5">Ya existe una cuenta con este correo.</string>
+    <string name="ui_an_account_with_this_email_already_exists_1cf5">Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña. Si usaste Google, elige Continuar con Google.</string>
     <string name="ui_request_a_recovery_link_first_51e3">Primero solicita el enlace de recuperación.</string>
     <string name="ui_this_account_does_not_exist_in_the_demo_b193">No existe esta cuenta en la demostración.</string>
     <string name="ui_sign_in_with_an_account_0d7a">Ingresa con una cuenta.</string>
@@ -480,4 +480,13 @@
 <string name="post_upload_notice">Al enviar, la foto seleccionada se subirá a la nube junto con la publicación.</string>
 <string name="post_image_failed">No se pudo subir la foto. Selecciona una imagen JPG, PNG o WebP de hasta 5 MB e inténtalo de nuevo. Tu borrador se conserva.</string>
 <string name="post_permission_failed">No tienes permiso para guardar este cambio. Comprueba que has iniciado sesión con la cuenta autora. Tu borrador se conserva.</string>
+    <string name="pending_posts_visibility">Tienes %1$d publicación(es) pendiente(s) de aprobación. Las otras cuentas podrán verlas cuando un moderador las apruebe.</string>
+    <string name="sent_proposals_link">Ver mis propuestas enviadas</string>
+    <string name="received_proposals_hint">Aquí están tus trabajos. Abre las propuestas recibidas debajo de cada publicación. Solo tú puedes ver las propuestas que te envían.</string>
+    <string name="received_proposals_count">Ver propuestas recibidas (%1$d)</string>
+    <string name="auth_invalid_credentials">El correo o la contraseña son incorrectos. Revisa ambos datos. Si aún no tienes cuenta, regístrate; si usaste Google, elige Continuar con Google.</string>
+    <string name="ai_input_hint">Describe qué necesitas. Por ejemplo: «La llave de la cocina gotea».</string>
+    <string name="cloud_processing">Procesando… Tu texto se conservará hasta que aceptes la sugerencia.</string>
+    <string name="ai_rate_limit">Has realizado varias solicitudes seguidas. Espera un minuto y vuelve a intentarlo. Tu texto se conserva.</string>
+    <string name="ai_timeout">La IA tardó demasiado en responder. Inténtalo de nuevo; tu texto se conserva.</string>
 </resources>

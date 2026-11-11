@@ -1,0 +1,33 @@
+✔ Account deletion requires explicit confirmation and recent authentication (0.656867ms)
+✔ Moderator bootstrap requires verified exact configured email (0.646238ms)
+✔ reject random single word before calling AI (5.886917ms)
+✔ needs-details response never becomes description (0.348869ms)
+✔ plain refusal and malformed output never replace draft (0.21471ms)
+✔ accept structured rewrite (0.273009ms)
+✔ reject explanatory or contact-bearing output (0.312289ms)
+✔ accept short meaningful requests (0.116899ms)
+✔ accept valid JSON wrapped in a code fence (0.11481ms)
+✔ do not extract JSON embedded in model explanations (0.227529ms)
+✔ retry malformed provider output once (21.20405ms)
+✔ stop after two malformed provider responses (0.538828ms)
+✔ do not retry a needs-details response (0.259949ms)
+✔ busy primary falls back to free router without paid models (0.621788ms)
+✔ Only sender can notify other chat participant (0.935897ms)
+✔ Worker cannot spoof acceptance and unfinished job cannot announce completion (0.15174ms)
+✔ Offer must belong to job and actor; reject path traversal (0.13581ms)
+✔ Rewards derive amount and owner from persisted events (0.964107ms)
+✔ valid draft (0.760827ms)
+✔ reject contact details and oversized prompt (0.184549ms)
+✔ reject unknown language (0.06921ms)
+✔ reject SVG and oversized images (0.126709ms)
+✔ stream limit does not trust headers (2.371651ms)
+✔ private endpoints reject missing auth (1.055346ms)
+✔ invalid JWT rejected (0.348328ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.701573

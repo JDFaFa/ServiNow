@@ -116,7 +116,7 @@ class CommunityViewModel @Inject constructor(private val repository: CommunityRe
                 val text = when (error) {
                     is IllegalArgumentException -> error.message ?: "AUTH_FAILED"
                     is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException,
-                    is com.google.firebase.auth.FirebaseAuthInvalidUserException -> if (recovery) "AUTH_RECOVERY_FAILED" else "La contraseña es incorrecta. Inténtalo de nuevo."
+                    is com.google.firebase.auth.FirebaseAuthInvalidUserException -> if (recovery) "AUTH_RECOVERY_FAILED" else "AUTH_INVALID_CREDENTIALS"
                     is com.google.firebase.auth.FirebaseAuthUserCollisionException -> "Ya existe una cuenta con este correo."
                     is com.google.firebase.FirebaseNetworkException -> "AUTH_NETWORK"
                     is com.google.firebase.FirebaseTooManyRequestsException -> "AUTH_THROTTLED"

@@ -36,6 +36,7 @@ fun localizedLabel(resources: android.content.res.Resources, value: String): Str
     "POST_IMAGE_FAILED" -> resources.getString(R.string.post_image_failed)
     "POST_PERMISSION_FAILED" -> resources.getString(R.string.post_permission_failed)
     "AUTH_FAILED" -> resources.getString(R.string.auth_failed)
+    "AUTH_INVALID_CREDENTIALS" -> resources.getString(R.string.auth_invalid_credentials)
     "AUTH_RESET_BROWSER" -> resources.getString(R.string.auth_recovery_notice)
     "AUTH_DELETE_PENDING" -> resources.getString(R.string.auth_delete_pending)
 
