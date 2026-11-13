@@ -497,4 +497,13 @@
     <string name="notice_approved">Tu publicación fue aprobada y ya puede recibir propuestas.</string>
     <string name="notice_rejected">Tu publicación necesita cambios. Abre el aviso para ver el motivo.</string>
     <string name="notice_comment">Hay un nuevo comentario en tu publicación.</string>
+    <string name="post_duplicate">Ya tienes una publicación activa con este título y descripción en esta categoría y ciudad. Revisa Mis publicaciones antes de crear otra.</string>
+    <string name="offer_price_invalid">Ingresa un precio entero entre 1 y 1.000.000.000 COP, sin puntos ni comas.</string>
+    <string name="offer_description_invalid">Describe qué incluye tu oferta usando entre 5 y 1.000 caracteres.</string>
+    <string name="offer_availability_invalid">Escribe tu disponibilidad usando entre 1 y 200 caracteres.</string>
+    <string name="offer_exists">Ya enviaste una oferta para este trabajo. Consúltala en Mis ofertas.</string>
+    <string name="offer_closed">Este trabajo ya no recibe ofertas. Regresa al detalle para consultar su estado actual.</string>
+    <string name="offer_own">No puedes enviar una oferta a tu propia publicación.</string>
+    <string name="offer_sent">Tu oferta se envió correctamente. Puedes consultarla en Mis ofertas.</string>
+    <string name="offer_description_short">La descripción es muy corta. Escribe al menos 5 caracteres.</string>
 </resources>

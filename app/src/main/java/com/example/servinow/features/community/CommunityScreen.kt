@@ -1012,7 +1012,7 @@ fun CommunityRoute(vm: CommunityViewModel = hiltViewModel(), notification: Membe
                             Field(resources.getString(R.string.ui_price_in_cop_ff89), price, { price = it })
                             Field(resources.getString(R.string.ui_what_is_included_8c99), text, { text = it }, true)
                             Field(resources.getString(R.string.ui_availability_cd96), whenText, { whenText = it })
-                            Action(resources.getString(R.string.ui_send_offer_caf4)) { vm.offer(price, text, whenText) }
+                            Action(resources.getString(R.string.ui_send_offer_caf4), enabled = !u.operationBusy) { vm.offer(price, text, whenText) }
                         }
                         "my-offers" -> {
                             Title(resources.getString(R.string.ui_your_opportunities_17c1))

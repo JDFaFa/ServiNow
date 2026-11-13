@@ -498,4 +498,13 @@
     <string name="notice_approved">Your post was approved and can now receive proposals.</string>
     <string name="notice_rejected">Your post needs changes. Open the notice to see the reason.</string>
     <string name="notice_comment">There is a new comment on your post.</string>
+    <string name="post_duplicate">You already have an active post with this title and description in this category and city. Check My posts before creating another one.</string>
+    <string name="offer_price_invalid">Enter a whole price between 1 and 1,000,000,000 COP, without separators.</string>
+    <string name="offer_description_invalid">Describe what your offer includes using 5 to 1,000 characters.</string>
+    <string name="offer_availability_invalid">Enter your availability using 1 to 200 characters.</string>
+    <string name="offer_exists">You already sent an offer for this job. Check My offers.</string>
+    <string name="offer_closed">This job is no longer accepting offers. Return to the job details to see its current status.</string>
+    <string name="offer_own">You cannot send an offer for your own job.</string>
+    <string name="offer_sent">Your offer was sent successfully. You can check it in My offers.</string>
+    <string name="offer_description_short">The description is too short. Enter at least 5 characters.</string>
 </resources>

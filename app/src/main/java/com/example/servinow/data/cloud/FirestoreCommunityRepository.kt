@@ -137,6 +137,7 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
         catch(_:Exception) { failures.value="CLOUD_LOAD_FAILED" }
     }
     override suspend fun savePost(post: WorkPost) {
+        jobs.checkDuplicate(post)
         val uri = post.imageUri
         val uploaded = if (uri != null && !uri.startsWith("https://res.cloudinary.com/")) gateway.upload(uri) else uri
         jobs.save(post.copy(imageUri = uploaded, hasImage = uploaded != null))
@@ -167,11 +168,14 @@ class FirestoreCommunityRepository @Inject constructor(private val jobs: Firesto
         announce("comment",id,comment.id)
     }
     override suspend fun offer(id:String,price:String,text:String,availability:String) {
-        val amount=price.toLongOrNull();require(amount!=null&&amount>0&&text.trim().length in 5..1000&&availability.trim().length in 1..200)
+        val validation = com.example.servinow.domain.validation.offerInputError(price,text,availability)
+        require(validation == null) { validation.orEmpty() }
+        val amount=price.trim().toLong()
         val ref=db.collection("offers").document("${id}_${actor}")
         db.runTransaction { tx ->
-            val p=tx.get(post(id));check(!tx.get(ref).exists()) { "Ya enviaste una oferta." }
-            check(p.getString("status")=="VERIFIED"&&p.getString("author")!=actor)
+            val p=tx.get(post(id));check(!tx.get(ref).exists()) { "OFFER_EXISTS" }
+            check(p.getString("author")!=actor) { "OFFER_OWN" }
+            check(p.getString("status")=="VERIFIED") { "OFFER_CLOSED" }
             tx.set(ref,mapOf("post" to id,"author" to p.getString("author"),"worker" to actor,"price" to amount,"description" to text.trim(),"availability" to availability.trim(),"createdAt" to FieldValue.serverTimestamp()))
         }.waitResult()
         announce("offer",id,ref.id)

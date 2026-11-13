@@ -30,6 +30,16 @@ class FirestoreWorkRepository @Inject constructor() {
         awaitClose { listener.remove() }
     }
 
+    suspend fun checkDuplicate(value: WorkPost) {
+        require(value.author == uid)
+        // Read the server, not the limited public feed or an incomplete local cache.
+        val existing = db.collection("posts").whereEqualTo("author", uid)
+            .get(com.google.firebase.firestore.Source.SERVER).waitResult()
+        check(existing.documents.mapNotNull(::decodePost).none {
+            com.example.servinow.domain.validation.isDuplicatePost(value, it)
+        }) { "POST_DUPLICATE" }
+    }
+
     suspend fun save(value: WorkPost) {
         val actor = uid
         require(value.author == actor)

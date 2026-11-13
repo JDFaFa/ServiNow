@@ -266,6 +266,8 @@ class CommunityViewModel @Inject constructor(private val repository: CommunityRe
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (error: Exception) {
                 message(when {
+                    error.message == "POST_DUPLICATE" -> "POST_DUPLICATE"
+                    error.message in setOf("OFFER_PRICE_INVALID","OFFER_DESCRIPTION_SHORT","OFFER_DESCRIPTION_INVALID","OFFER_AVAILABILITY_INVALID","OFFER_EXISTS","OFFER_CLOSED","OFFER_OWN") -> error.message!!
                     error.message in setOf("IMAGE_SIZE", "IMAGE_TYPE", "IMAGE_UNREADABLE", "IMAGE_UPLOAD_FAILED") -> "POST_IMAGE_FAILED"
                     error is com.google.firebase.firestore.FirebaseFirestoreException && error.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED -> "POST_PERMISSION_FAILED"
                     else -> "CLOUD_OPERATION_FAILED"
@@ -298,8 +300,12 @@ class CommunityViewModel @Inject constructor(private val repository: CommunityRe
     fun comment(text:String, onSent:()->Unit = {}) = operation(completed=onSent) {
         if(remote!=null) { remote.comment(ui.value.postId,text); null } else repository.comment(ui.value.postId,text)
     }
-    fun offer(price:String,text:String,availability:String) = operation("my-offers") {
-        if(remote!=null) { remote.offer(ui.value.postId,price,text,availability); null } else repository.offer(ui.value.postId,price,text,availability)
+    fun offer(price:String,text:String,availability:String) {
+        val error = com.example.servinow.domain.validation.offerInputError(price,text,availability)
+        if(error != null) { message(error); return }
+        operation("my-offers", "OFFER_SENT") {
+            if(remote!=null) { remote.offer(ui.value.postId,price,text,availability); null } else repository.offer(ui.value.postId,price,text,availability)
+        }
     }
 
     fun selectOffer(id: String) {

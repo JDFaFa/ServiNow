@@ -180,6 +180,7 @@ class InMemoryCommunityRepository @Inject constructor() : CommunityRepository {
         )
             return "La ubicación no es válida."
         if (!post.hasImage) return "Selecciona una foto del trabajo."
+        if (state.value.posts.any { com.example.servinow.domain.validation.isDuplicatePost(post.copy(author = me.id), it) }) return "POST_DUPLICATE"
         val old = state.value.posts.find { it.id == post.id }
         if (old != null && old.author != me.id) return "Solo el autor puede editar."
         if (old?.status in listOf(PostStatus.IN_PROGRESS, PostStatus.FINISHED))
